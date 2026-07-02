@@ -277,7 +277,7 @@ These avoided emissions are not included in the $/tCO2 cost metric (which is per
 
 | Parameter | P10 | P50 | P90 | Notes |
 |-----------|-----|-----|-----|-------|
-| CDR efficiency | 0.55 | 0.65 | 0.75 | Fraction of biomass C retained in stable bio-oil |
+| CDR efficiency | 0.55 | 0.65 | 0.70 | Fraction of biomass C retained in stable bio-oil |
 | Total cost ($/tCO2) | 250 | 350 | 500 | Current Frontier offtake pricing |
 | Co-product revenue ($/tCO2) | 0 | 10 | 20 | Nutrient return to soil |
 | 45Q subsidy ($/tCO2) | 0 | 0 | 0 | Not eligible |
@@ -290,7 +290,7 @@ These avoided emissions are not included in the $/tCO2 cost metric (which is per
 
 | Parameter | P10 | P50 | P90 | Notes |
 |-----------|-----|-----|-----|-------|
-| CDR efficiency | 0.55 | 0.65 | 0.75 | Fraction of biomass C retained in stable bio-oil |
+| CDR efficiency | 0.55 | 0.65 | 0.70 | Fraction of biomass C retained in stable bio-oil |
 | Total cost ($/tCO2) | 225 | 325 | 475 | Slightly lower than cellulosic |
 | Co-product revenue ($/tCO2) | 0 | 10 | 20 | Nutrient return |
 | 45Q subsidy ($/tCO2) | 0 | 0 | 0 | Not eligible |
