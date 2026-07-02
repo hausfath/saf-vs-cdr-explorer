@@ -1,0 +1,1454 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Interactive cost-effectiveness explorer: sustainable aviation fuel vs carbon dioxide removal for waste biomass. Adjust assumptions and compare $/tCO2 across 14 pathways.">
+<title>SAF vs CDR Explorer</title>
+</head>
+<body>
+<style>
+  :root {
+    --paper: #f9f9f7;
+    --surface: #fcfcfb;
+    --ink: #14130f;
+    --ink-2: #52514e;
+    --ink-3: #898781;
+    --grid: #e1e0d9;
+    --baseline: #c3c2b7;
+    --border: rgba(11,11,11,0.10);
+    --saf: #2a78d6;
+    --saf-soft: rgba(42,120,214,0.14);
+    --cdr: #008300;
+    --cdr-soft: rgba(0,131,0,0.12);
+    --released: #e3e2da;
+    --track: #e7e6df;
+    --serif: "Charter", "Iowan Old Style", Georgia, serif;
+    --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #0d0d0d;
+      --surface: #1a1a19;
+      --ink: #f2f1ea;
+      --ink-2: #c3c2b7;
+      --ink-3: #898781;
+      --grid: #2c2c2a;
+      --baseline: #383835;
+      --border: rgba(255,255,255,0.10);
+      --saf: #3987e5;
+      --saf-soft: rgba(57,135,229,0.20);
+      --cdr: #009e00;
+      --cdr-soft: rgba(0,158,0,0.16);
+      --released: #33332f;
+      --track: #2c2c2a;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  .masthead {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 34px 24px 20px;
+    border-bottom: 1px solid var(--grid);
+  }
+  .masthead .kicker {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 10px;
+  }
+  .masthead h1 {
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: clamp(24px, 3.4vw, 34px);
+    line-height: 1.15;
+    margin: 0 0 10px;
+    text-wrap: balance;
+    max-width: 30em;
+  }
+  .masthead h1 .saf-word { color: var(--saf); }
+  .masthead h1 .cdr-word { color: var(--cdr); }
+  .masthead p {
+    margin: 0;
+    max-width: 62ch;
+    color: var(--ink-2);
+    font-size: 15px;
+  }
+  .layout {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 20px 24px 60px;
+    display: grid;
+    grid-template-columns: 330px minmax(0, 1fr);
+    gap: 26px;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    aside.controls { position: static !important; max-height: none !important; }
+  }
+
+  /* ------- controls rail ------- */
+  aside.controls {
+    position: sticky;
+    top: 14px;
+    max-height: calc(100vh - 28px);
+    overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 16px 20px;
+  }
+  .controls-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .controls-head h2 {
+    font-family: var(--serif);
+    font-size: 17px;
+    margin: 0;
+  }
+  button.reset {
+    font: inherit;
+    font-size: 12px;
+    color: var(--ink-2);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px 10px;
+    cursor: pointer;
+  }
+  button.reset:hover { border-color: var(--ink-3); color: var(--ink); }
+  .ctl-section { margin-top: 14px; }
+  .ctl-section > h3 {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-weight: 600;
+    margin: 0 0 4px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--grid);
+  }
+  .ctl-section > h3 .swatch {
+    display: inline-block;
+    width: 9px; height: 9px;
+    border-radius: 2px;
+    margin-right: 6px;
+    vertical-align: 0;
+  }
+  .ctl {
+    padding: 8px 0 2px;
+  }
+  .ctl .row1 {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .ctl label {
+    font-size: 13px;
+    color: var(--ink);
+  }
+  .ctl .sub {
+    font-size: 11.5px;
+    color: var(--ink-3);
+    margin-top: 1px;
+  }
+  .ctl input[type="number"] {
+    font: inherit;
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+    width: 74px;
+    text-align: right;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 2px 6px;
+  }
+  .ctl input[type="range"] {
+    width: 100%;
+    margin: 8px 0 0;
+    accent-color: var(--ink-2);
+    height: 18px;
+  }
+  .ctl.saf input[type="range"] { accent-color: var(--saf); }
+  .ctl.cdr input[type="range"] { accent-color: var(--cdr); }
+  details.adv { margin: 2px 0 6px; }
+  details.adv summary {
+    font-size: 11.5px;
+    color: var(--ink-3);
+    cursor: pointer;
+    padding: 2px 0;
+    list-style-position: outside;
+  }
+  details.adv summary:hover { color: var(--ink-2); }
+  details.adv .ctl { padding-top: 4px; }
+  details.adv .ctl label { font-size: 12px; color: var(--ink-2); }
+  label.radio-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: var(--ink-2);
+    padding: 2px 0;
+    cursor: pointer;
+  }
+  label.radio-row input { accent-color: var(--cdr); margin: 0; flex: none; }
+  .pathway-block { border-bottom: 1px dotted var(--grid); padding-bottom: 4px; }
+  .pathway-block:last-child { border-bottom: none; }
+  .scale-note {
+    font-size: 11.5px;
+    color: var(--ink-3);
+    margin-top: 16px;
+    padding-top: 10px;
+    border-top: 1px solid var(--grid);
+  }
+
+  /* ------- results column ------- */
+  main { min-width: 0; }
+  .viewbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 18px;
+    margin-bottom: 16px;
+  }
+  .seg {
+    display: inline-flex;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    overflow: hidden;
+    background: var(--surface);
+  }
+  .seg button {
+    font: inherit;
+    font-size: 12.5px;
+    padding: 5px 12px;
+    border: none;
+    background: none;
+    color: var(--ink-2);
+    cursor: pointer;
+    border-right: 1px solid var(--border);
+  }
+  .seg button:last-child { border-right: none; }
+  .seg button[aria-pressed="true"] {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .seg-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-3);
+    margin-right: -8px;
+  }
+  .viewbar .toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    color: var(--ink-2);
+    cursor: pointer;
+    user-select: none;
+  }
+  .viewbar .toggle input { accent-color: var(--ink-2); }
+  button.copylink {
+    font: inherit;
+    font-size: 12px;
+    margin-left: auto;
+    color: var(--ink-2);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 12px;
+    cursor: pointer;
+  }
+  button.copylink:hover { color: var(--ink); border-color: var(--ink-3); }
+
+  .tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .tile {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px 12px;
+  }
+  .tile .t-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--ink-3);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tile .t-label .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .tile .t-value {
+    font-size: 27px;
+    font-weight: 600;
+    margin-top: 4px;
+    line-height: 1.1;
+  }
+  .tile .t-sub {
+    font-size: 12px;
+    color: var(--ink-2);
+    margin-top: 3px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 20px 14px;
+    margin-bottom: 16px;
+  }
+  .card h2 {
+    font-family: var(--serif);
+    font-size: 19px;
+    font-weight: 700;
+    margin: 0 0 2px;
+  }
+  .card .card-sub {
+    font-size: 12.5px;
+    color: var(--ink-2);
+    margin: 0 0 12px;
+    max-width: 70ch;
+  }
+  .chart-wrap { overflow-x: auto; }
+  .chart-wrap svg { display: block; width: 100%; height: auto; min-width: 620px; }
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    font-size: 12px;
+    color: var(--ink-2);
+    margin: 10px 2px 2px;
+  }
+  .legend .key { display: inline-flex; align-items: center; gap: 6px; }
+  .legend .key i {
+    width: 12px; height: 12px;
+    border-radius: 3px;
+    display: inline-block;
+  }
+
+  svg text { font-family: var(--sans); }
+  .bar-hit { cursor: default; }
+  .bar-hit:focus { outline: none; }
+  .bar-hit:focus .bar-main, .bar-hit:hover .bar-main { filter: brightness(0.85); }
+
+  #tooltip {
+    position: fixed;
+    z-index: 30;
+    pointer-events: none;
+    background: var(--surface);
+    color: var(--ink);
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.18);
+    border-radius: 7px;
+    padding: 10px 12px;
+    font-size: 12px;
+    max-width: 280px;
+    display: none;
+  }
+  #tooltip h4 { margin: 0 0 6px; font-size: 12.5px; }
+  #tooltip table { border-collapse: collapse; width: 100%; }
+  #tooltip td {
+    padding: 1px 0;
+    font-variant-numeric: tabular-nums;
+  }
+  #tooltip td:last-child { text-align: right; padding-left: 14px; }
+  #tooltip tr.total td { border-top: 1px solid var(--grid); padding-top: 3px; font-weight: 600; }
+  #tooltip .muted { color: var(--ink-3); }
+
+  .table-wrap { overflow-x: auto; }
+  table.data {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 12.5px;
+  }
+  table.data th, table.data td {
+    text-align: right;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--grid);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  table.data th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-3);
+    font-weight: 600;
+    border-bottom: 1px solid var(--baseline);
+  }
+  table.data th:first-child, table.data td:first-child { text-align: left; padding-left: 2px; }
+  table.data td:first-child { font-weight: 500; }
+  table.data .type-pill {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    border-radius: 4px;
+    padding: 1px 7px;
+    margin-left: 8px;
+  }
+  .type-pill.saf { background: var(--saf-soft); color: var(--saf); }
+  .type-pill.cdr { background: var(--cdr-soft); color: var(--cdr); }
+
+  .notes {
+    font-size: 12.5px;
+    color: var(--ink-2);
+    max-width: 78ch;
+  }
+  .notes h3 {
+    font-family: var(--serif);
+    font-size: 15px;
+    color: var(--ink);
+    margin: 14px 0 4px;
+  }
+  .notes p { margin: 4px 0; }
+  .notes code {
+    font-size: 11.5px;
+    background: var(--paper);
+    border: 1px solid var(--grid);
+    border-radius: 4px;
+    padding: 0 4px;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .bar-main { transition: filter 120ms ease; }
+  }
+  :focus-visible { outline: 2px solid var(--saf); outline-offset: 2px; }
+</style>
+
+<header class="masthead">
+  <p class="kicker">Interactive analysis &middot; Biomass carbon economics</p>
+  <h1>One ton of waste biomass: make <span class="saf-word">jet fuel</span>, or <span class="cdr-word">remove carbon</span>?</h1>
+  <p>Sustainable aviation fuel and biomass carbon removal compete for the same limited feedstock.
+     This tool compares their cost per tonne of CO₂ benefit across 14 pathways. Adjust any assumption —
+     fuel production cost, jet fuel price, CDR cost, tax credits — and every result updates live.
+     Based on the analysis by Zeke Hausfather; uncertainty ranges are P10–P90 from a Monte Carlo simulation.</p>
+</header>
+
+<div class="layout">
+<aside class="controls" aria-label="Model assumptions">
+  <div class="controls-head">
+    <h2>Assumptions</h2>
+    <button class="reset" id="resetBtn" title="Restore all assumptions to the study's central estimates">Reset all</button>
+  </div>
+  <div id="ctlGlobal" class="ctl-section"></div>
+  <div id="ctlSaf" class="ctl-section"></div>
+  <div id="ctlCdr" class="ctl-section"></div>
+  <p class="scale-note">Sliders set the central (P50) estimate; each pathway's P10–P90 uncertainty
+     range scales proportionally with your value.</p>
+</aside>
+
+<main>
+  <div class="viewbar" role="group" aria-label="View options">
+    <span class="seg-label">Cost basis</span>
+    <div class="seg" id="metricSeg">
+      <button data-metric="gross" aria-pressed="false">Gross</button>
+      <button data-metric="net" aria-pressed="false">Net of revenues</button>
+      <button data-metric="netWithSubsidy" aria-pressed="true">Net + subsidies</button>
+    </div>
+    <span class="seg-label">Accounting</span>
+    <div class="seg" id="lcaSeg">
+      <button data-lca="0" aria-pressed="true">Simple displacement</button>
+      <button data-lca="1" aria-pressed="false">Full lifecycle</button>
+    </div>
+    <label class="toggle"><input type="checkbox" id="whiskerToggle" checked> Uncertainty ranges</label>
+    <button class="copylink" id="copyBtn" title="Copy a URL that restores these exact assumptions">Copy scenario link</button>
+  </div>
+
+  <section class="tiles" id="tiles" aria-label="Headline results"></section>
+
+  <section class="card">
+    <h2>Cost per tonne of CO₂</h2>
+    <p class="card-sub" id="costSub"></p>
+    <div class="chart-wrap"><svg id="costChart" role="img" aria-label="Bar chart of cost per tonne CO2 by pathway"></svg></div>
+    <div class="legend">
+      <span class="key"><i style="background:var(--saf)"></i> SAF (avoided emissions)</span>
+      <span class="key"><i style="background:var(--cdr)"></i> CDR (removed CO₂)</span>
+      <span class="key"><i style="background:none;border-bottom:2px solid var(--baseline);height:0;border-radius:0"></i> P10–P90 range</span>
+      <span class="key"><i style="background:none;border-left:1px dashed var(--ink-3);width:0;border-radius:0"></i> Social cost of carbon $50 / $200</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Carbon benefit per dry ton of biomass</h2>
+    <p class="card-sub" id="carbonSub"></p>
+    <div class="chart-wrap"><svg id="carbonChart" role="img" aria-label="Stacked bar chart of carbon stored, avoided, and released per dry ton"></svg></div>
+    <div class="legend">
+      <span class="key"><i style="background:var(--cdr)"></i> CO₂ permanently stored</span>
+      <span class="key"><i style="background:var(--saf)"></i> CO₂ avoided (fossil displacement)</span>
+      <span class="key"><i style="background:var(--released);border:1px solid var(--grid)"></i> CO₂ released to atmosphere</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>All pathways in numbers</h2>
+    <p class="card-sub">Every value shown in the charts, plus the P10–P90 range for the selected cost basis. Negative values mean revenues and credits exceed costs.</p>
+    <div class="table-wrap"><table class="data" id="dataTable"></table></div>
+  </section>
+
+  <section class="card notes">
+    <h2>Method, in brief</h2>
+    <p>Both uses of biomass are put on a common metric: <strong>dollars per tonne of CO₂ climate benefit</strong>.
+       For SAF the benefit is fossil jet fuel displaced; for CDR it is CO₂ permanently removed; FT-SAF&nbsp;+&nbsp;CCS earns both.</p>
+    <h3>Cost formulas</h3>
+    <p><strong>SAF:</strong> <code>(MFSP × gallons − jet fuel revenue − 45Z credit − 45Q on stored CO₂) ÷ tCO₂ benefit</code>.
+       MFSP (minimum fuel selling price) is feedstock-inclusive. Gallons per dry ton follow from mass yield
+       (kg fuel / kg feedstock ÷ 0.8 kg/L ÷ 3.79 L/gal); each gallon displaces 9.75 kg CO₂ of fossil jet (EIA).
+       FT-SAF&nbsp;+&nbsp;CCS is not priced independently: its MFSP is the FT-SAF (ag/forest) cost plus the CCS cost
+       slider applied to the ~0.018 tCO₂ stored per gallon (54% of biomass carbon exits as a concentrated CO₂
+       stream during gasification, so capture is cheap; the cost is mostly transport and storage).</p>
+    <p><strong>CDR:</strong> <code>(total cost − co-product revenue − 45Q) ÷ tCO₂ removed</code>. Costs are feedstock-inclusive
+       and calibrated to actual offtake pricing. A dry ton of biomass holds 1.83 tCO₂e; removal = 1.83 × capture efficiency.</p>
+    <h3>Subsidies</h3>
+    <p>The 45Q credit ($85/tCO₂ statutory) requires gaseous CO₂ capture — BECCS, WtE+CCS, and FT-SAF+CCS qualify; bio-oil,
+       biochar, burial, and injection do not. The 45Z Clean Fuel Production Credit (post-OBBBA: up to $1.00/gal with
+       prevailing-wage compliance, through 2029) is scaled by carbon intensity, <code>(50 − CI)/50</code> — at typical SAF
+       lifecycle reductions it is worth ~$0.35–0.45/gal, and it varies with each Monte Carlo draw.</p>
+    <p>The 45V clean hydrogen production credit survived OBBBA but was shortened: facilities must begin construction
+       before January 1, 2028 (previously 2033) to claim up to $3.00/kg for ten years. 45V and 45Q cannot be claimed
+       at the same facility (§45V(d)(2)), so the BECCS (hydrogen) pathway carries an election toggle — 45Q on stored
+       CO₂ (default) or 45V on the hydrogen, worth ~$126/tCO₂ removed at the default 65% capture efficiency. Deeply
+       carbon-negative biomass-gasification hydrogen readily meets the 0.45 kgCO₂e/kg threshold for the full rate.
+       Its co-product revenue default ($130/tCO₂ ≈ $3.1/kg H₂) is a market price between gray and green hydrogen,
+       independent of either credit.</p>
+    <h3>Accounting toggles</h3>
+    <p><em>Simple displacement</em> credits SAF with the full combustion emissions of the jet fuel it replaces.
+       <em>Full lifecycle</em> multiplies SAF's benefit by its lifecycle GHG reduction (CORSIA-style, typically 50–85%),
+       applies 95% net-negativity to CDR storage, and credits CDR co-products (electricity, heat, hydrogen) with the
+       fossil emissions they displace.</p>
+    <h3>Caveats</h3>
+    <p>Avoided ≠ removed: SAF benefits are counterfactual and shrink if aviation decarbonizes another way; CDR removals are
+       permanent. Non-CO₂ aviation effects (contrails) are not modeled — crediting them could roughly double SAF's benefit.
+       No commercial FT-SAF+CCS plant exists; those costs are techno-economic estimates. HEFA uses waste fats and oils, which
+       mostly do not compete with cellulosic CDR for the same feedstock and are supply-limited (~5–10 Mt/yr globally).</p>
+    <p class="muted" style="color:var(--ink-3)">Model logic mirrors <code>saf_vs_cdr_analysis.py</code> (PERT-distributed
+       inputs, 4,000-draw Monte Carlo per pathway). Sources: Liu et al. 2011; Dimitriou et al. 2018; NREL/TP-5100-66291;
+       Tanzil et al. 2021; Fuss et al. 2018; NASEM 2019; ICAO CORSIA 2024; DOE SAF Grand Challenge 2022; EIA 2024;
+       Frontier BiCRS purchasing analyses.</p>
+  </section>
+</main>
+</div>
+
+<div id="tooltip" role="tooltip"></div>
+
+<script>
+'use strict';
+// ============================================================================
+// MODEL — faithful port of saf_vs_cdr_analysis.py
+// ============================================================================
+const C = {
+  CO2E_PER_DRY_TON: 0.5 * 3.667,
+  CO2_PER_GAL_FOSSIL_JET: 9.75,
+  JET_FUEL_DENSITY: 0.8,
+  LITERS_PER_GALLON: 3.79,
+  CFPC_45Z_BASELINE_CI: 50.0,
+  FOSSIL_JET_CI: 89.0 * 1055.06 / 1000.0,
+};
+
+function saf45zCredit(ghgReduction, maxPerGal) {
+  const ci = (1.0 - ghgReduction) * C.FOSSIL_JET_CI;
+  const f = Math.min(1.0, Math.max(0.0, (C.CFPC_45Z_BASELINE_CI - ci) / C.CFPC_45Z_BASELINE_CI));
+  return maxPerGal * f;
+}
+function gallonsPerDryTon(massYield) {
+  return massYield * 1000.0 / (C.JET_FUEL_DENSITY * C.LITERS_PER_GALLON);
+}
+function safCosts(massYield, mfsp, jetPrice, credit, lcaFactor, cdrEff, subsidy45q) {
+  const gal = gallonsPerDryTon(massYield);
+  const co2Avoided = gal * C.CO2_PER_GAL_FOSSIL_JET * lcaFactor / 1000.0;
+  const co2Removed = C.CO2E_PER_DRY_TON * cdrEff;
+  const co2Total = co2Avoided + co2Removed;
+  const grossCost = mfsp * gal;
+  const fuelRevenue = jetPrice * gal;
+  const safSubsidy = credit * gal;
+  const ccsSubsidy = cdrEff > 0 ? co2Removed * subsidy45q : 0.0;
+  return {
+    gross: grossCost / co2Total,
+    net: (grossCost - fuelRevenue) / co2Total,
+    netWithSubsidy: (grossCost - fuelRevenue - safSubsidy - ccsSubsidy) / co2Total,
+    co2Avoided, co2Removed, co2Total, gallons: gal,
+    grossPerT: grossCost / co2Total,
+    fuelRevPerT: fuelRevenue / co2Total,
+    zCreditPerT: safSubsidy / co2Total,
+    qCreditPerT: ccsSubsidy / co2Total,
+  };
+}
+function cdrCosts(totalCost, coproductRevenue, subsidy45q) {
+  return {
+    gross: totalCost,
+    net: totalCost - coproductRevenue,
+    netWithSubsidy: totalCost - coproductRevenue - subsidy45q,
+  };
+}
+
+const SAF_PATHWAYS = [
+  { id: 'ft',    name: 'FT-SAF (ag/forest waste)', short: 'FT-SAF (ag/forest)', feedstock: 'Ag residues, forest waste', cat: 'cellulosic',
+    massYield: [0.13, 0.17, 0.21], mfsp: [4.00, 7.00, 9.00], lca: [0.60, 0.70, 0.85], cdrEff: 0,
+    note: 'Fischer-Tropsch gasification; pre-commercial' },
+  { id: 'ftccs', name: 'FT-SAF + CCS', short: 'FT-SAF + CCS', feedstock: 'Ag residues, forest waste', cat: 'cellulosic',
+    massYield: [0.13, 0.17, 0.21], mfsp: [8.75, 9.65, 11.40], lca: [0.60, 0.70, 0.85], cdrEff: 0.537,
+    note: 'FT with CO₂ capture; stores 54% of biomass carbon' },
+  { id: 'ftsw',  name: 'FT-SAF (switchgrass)', short: 'FT-SAF (switchgrass)', feedstock: 'Switchgrass (marginal land)', cat: 'cellulosic',
+    massYield: [0.13, 0.17, 0.21], mfsp: [4.50, 7.50, 10.00], lca: [0.55, 0.65, 0.80], cdrEff: 0,
+    note: 'Purpose-grown energy crop feedstock' },
+  { id: 'hefa',  name: 'HEFA (waste fats/oils)', short: 'HEFA (waste fats)', feedstock: 'Waste fats/oils', cat: 'lipid',
+    massYield: [0.40, 0.50, 0.60], mfsp: [3.00, 4.50, 6.00], lca: [0.60, 0.70, 0.85], cdrEff: 0,
+    note: 'Only commercial SAF today; feedstock-limited' },
+  { id: 'atj',   name: 'AtJ-SAF (ag/forest waste)', short: 'AtJ-SAF (ag/forest)', feedstock: 'Ag residues, forest waste', cat: 'cellulosic',
+    massYield: [0.08, 0.12, 0.16], mfsp: [5.00, 9.00, 12.00], lca: [0.50, 0.65, 0.80], cdrEff: 0,
+    note: 'Alcohol-to-jet; pre-commercial' },
+];
+
+const CDR_PATHWAYS = [
+  { id: 'beccsE',  name: 'BECCS (electricity)', short: 'BECCS (electricity)', feedstock: 'Ag residues, forest waste', cat: 'cellulosic',
+    eff: [0.80, 0.90, 0.95], cost: [200, 300, 400], coproduct: 'electricity', rev: [18, 25, 35], has45q: true, avoidedPerDt: 0.33 },
+  { id: 'beccsH',  name: 'BECCS (heat)', short: 'BECCS (heat)', feedstock: 'Ag residues, forest waste', cat: 'cellulosic',
+    eff: [0.80, 0.90, 0.95], cost: [200, 285, 400], coproduct: 'heat', rev: [20, 25, 35], has45q: true, avoidedPerDt: 0.25 },
+  { id: 'beccsH2', name: 'BECCS (hydrogen)', short: 'BECCS (hydrogen)', feedstock: 'Ag residues, forest waste', cat: 'cellulosic',
+    eff: [0.55, 0.65, 0.75], cost: [200, 300, 400], coproduct: 'hydrogen', rev: [78, 130, 182], has45q: true, avoidedPerDt: 0.55 },
+  { id: 'wte',     name: 'WtE + CCS', short: 'WtE + CCS', feedstock: 'Municipal solid waste', cat: 'MSW',
+    eff: [0.70, 0.80, 0.88], cost: [200, 300, 400], coproduct: 'electricity + heat', rev: [25, 40, 60], has45q: true, avoidedPerDt: 0.30 },
+  { id: 'biooil',  name: 'Bio-oil seq. (cellulosic)', short: 'Bio-oil sequestration', feedstock: 'Ag residues, forest waste', cat: 'cellulosic',
+    eff: [0.35, 0.45, 0.55], cost: [250, 350, 500], coproduct: 'nutrient return', rev: [0, 10, 20], has45q: false, avoidedPerDt: 0 },
+  { id: 'biooilHtl', name: 'Bio-oil seq. (HTL, lipid)', short: 'Bio-oil seq. (HTL)', feedstock: 'Waste fats/oils', cat: 'lipid',
+    eff: [0.35, 0.45, 0.55], cost: [225, 325, 475], coproduct: 'nutrient return', rev: [0, 10, 20], has45q: false, avoidedPerDt: 0 },
+  { id: 'injection', name: 'Biomass injection', short: 'Biomass injection', feedstock: 'Wet waste (manure etc.)', cat: 'wet waste',
+    eff: [0.85, 0.92, 0.95], cost: [125, 200, 285], coproduct: 'PFAS destruction', rev: [0, 0, 0], has45q: false, avoidedPerDt: 0 },
+  { id: 'biochar', name: 'Biochar', short: 'Biochar', feedstock: 'Ag residues, forest waste', cat: 'cellulosic',
+    eff: [0.20, 0.30, 0.40], cost: [100, 200, 350], coproduct: 'biochar product', rev: [0, 20, 50], has45q: false, avoidedPerDt: 0 },
+  { id: 'burial',  name: 'Biomass burial', short: 'Biomass burial', feedstock: 'Forest waste, woody biomass', cat: 'woody',
+    eff: [0.85, 0.95, 0.98], cost: [90, 150, 200], coproduct: 'none', rev: [0, 0, 0], has45q: false, avoidedPerDt: 0 },
+];
+
+// --- PERT sampling (seeded, stable across re-renders) ---
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function makeNormal(rand) {
+  let spare = null;
+  return function () {
+    if (spare !== null) { const v = spare; spare = null; return v; }
+    let u, v, s;
+    do { u = 2 * rand() - 1; v = 2 * rand() - 1; s = u * u + v * v; } while (s >= 1 || s === 0);
+    const m = Math.sqrt(-2 * Math.log(s) / s);
+    spare = v * m;
+    return u * m;
+  };
+}
+function makeGamma(rand, normal) {
+  function gamma(alpha) {
+    if (alpha < 1) return gamma(alpha + 1) * Math.pow(rand(), 1 / alpha);
+    const d = alpha - 1 / 3, c2 = 1 / Math.sqrt(9 * d);
+    for (;;) {
+      let x, v;
+      do { x = normal(); v = 1 + c2 * x; } while (v <= 0);
+      v = v * v * v;
+      const u = rand();
+      if (u < 1 - 0.0331 * x * x * x * x) return d * v;
+      if (Math.log(u) < 0.5 * x * x + d * (1 - v + Math.log(v))) return d * v;
+    }
+  }
+  return gamma;
+}
+function pertParams(a, b, c) {
+  if ((a === b && b === c) || c === a) return null;
+  const mu = (a + 4 * b + c) / 6;
+  const denom = (b - mu) * (c - a);
+  if (Math.abs(denom) < 1e-12) return { a, c, alpha: 4.0, beta: 4.0 };
+  let alpha = ((mu - a) * (2 * b - a - c)) / denom;
+  if (alpha <= 0) alpha = 1.5;
+  let beta = Math.abs(mu - a) > 1e-12 ? alpha * (c - mu) / (mu - a) : 1.5;
+  if (beta <= 0) beta = 1.5;
+  return { a, c, alpha, beta };
+}
+function pertDraws(lo, mid, hi, n, rand, normal, gamma) {
+  const p = pertParams(lo, mid, hi);
+  const out = new Float64Array(n);
+  if (!p) { out.fill(mid); return out; }
+  for (let i = 0; i < n; i++) {
+    const g1 = gamma(p.alpha), g2 = gamma(p.beta);
+    out[i] = Math.min(p.c, Math.max(p.a, p.a + (g1 / (g1 + g2)) * (p.c - p.a)));
+  }
+  return out;
+}
+function percentile(arr, q) {
+  const s = Float64Array.from(arr).sort();
+  const idx = (q / 100) * (s.length - 1);
+  const lo = Math.floor(idx), hi = Math.ceil(idx);
+  return s[lo] + (s[hi] - s[lo]) * (idx - lo);
+}
+function hashId(s) {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+function scaledTriple(orig, newMid, clampHi) {
+  const [lo, mid, hi] = orig;
+  if (mid === 0) return [lo, newMid, hi];
+  let l = lo * newMid / mid, h = hi * newMid / mid;
+  if (clampHi !== undefined) h = Math.min(h, clampHi);
+  return [l, newMid, h];
+}
+
+const N_DRAWS = 4000;
+const H2_KG_PER_DRY_TON = 50;   // Mote PFD: 0.05 t H2 per dry ton of biomass
+const V45_PER_KG_H2 = 3.00;     // 45V max ($/kg, CI < 0.45 kgCO2e/kg + prevailing wage)
+
+// FT-SAF+CCS production cost = FT-SAF base MFSP + CCS cost applied to the
+// tCO2 stored per gallon (0.537 of biomass carbon, spread over the fuel yield)
+function ftccsMfsp(inputs) {
+  const sp = SAF_PATHWAYS.find(p => p.id === 'ftccs');
+  const storedPerGal = C.CO2E_PER_DRY_TON * sp.cdrEff / gallonsPerDryTon(inputs.massYield.ftccs);
+  return {
+    base: inputs.mfsp.ft,
+    ccsAdder: inputs.ccsCost * storedPerGal,
+    total: inputs.mfsp.ft + inputs.ccsCost * storedPerGal,
+  };
+}
+
+function evalScenario(inputs) {
+  const n = N_DRAWS;
+  const results = [];
+  const jetTriple = scaledTriple([2.50, 3.00, 3.50], inputs.jetPrice);
+
+  for (const sp of SAF_PATHWAYS) {
+    const mfspMid = sp.id === 'ftccs' ? ftccsMfsp(inputs).total : inputs.mfsp[sp.id];
+    const mfspT = scaledTriple(sp.mfsp, mfspMid);
+    const yieldT = scaledTriple(sp.massYield, inputs.massYield[sp.id]);
+    const lcaT = scaledTriple(sp.lca, inputs.lcaRed[sp.id], 0.95);
+    const midLcaFactor = inputs.useLca ? lcaT[1] : 1.0;
+    const midCredit = saf45zCredit(lcaT[1], inputs.z45Max);
+    const mid = safCosts(yieldT[1], mfspT[1], jetTriple[1], midCredit, midLcaFactor, sp.cdrEff, inputs.q45);
+
+    const rand = mulberry32(hashId(sp.id));
+    const normal = makeNormal(rand);
+    const gamma = makeGamma(rand, normal);
+    const yields = pertDraws(yieldT[0], yieldT[1], yieldT[2], n, rand, normal, gamma);
+    const mfsps  = pertDraws(mfspT[0], mfspT[1], mfspT[2], n, rand, normal, gamma);
+    const jets   = pertDraws(jetTriple[0], jetTriple[1], jetTriple[2], n, rand, normal, gamma);
+    const lcas   = pertDraws(lcaT[0], lcaT[1], lcaT[2], n, rand, normal, gamma);
+    const draws = { gross: new Float64Array(n), net: new Float64Array(n), netWithSubsidy: new Float64Array(n) };
+    for (let i = 0; i < n; i++) {
+      const credit = saf45zCredit(lcas[i], inputs.z45Max);
+      const r = safCosts(yields[i], mfsps[i], jets[i], credit, inputs.useLca ? lcas[i] : 1.0, sp.cdrEff, inputs.q45);
+      draws.gross[i] = r.gross; draws.net[i] = r.net; draws.netWithSubsidy[i] = r.netWithSubsidy;
+    }
+    results.push({
+      def: sp, type: 'SAF', mid,
+      p10: bandOf(draws, 10), p90: bandOf(draws, 90),
+      lcaMid: lcaT[1],
+    });
+  }
+
+  for (const cp of CDR_PATHWAYS) {
+    const costT = scaledTriple(cp.cost, inputs.cdrCost[cp.id]);
+    const revT = scaledTriple(cp.rev, inputs.cdrRev[cp.id]);
+    const effT = scaledTriple(cp.eff, inputs.cdrEff[cp.id], 0.98);
+    // BECCS-H2 must elect 45Q or 45V (IRC 45V(d)(2) bars stacking); 45V pays
+    // $3/kg on the ~50 kg H2 per dry ton, expressed here per tCO2 removed.
+    let sub = cp.has45q ? inputs.q45 : 0;
+    let subLabel = '45Q credit';
+    if (cp.id === 'beccsH2' && inputs.h2Credit === 'v45') {
+      sub = V45_PER_KG_H2 * H2_KG_PER_DRY_TON / (C.CO2E_PER_DRY_TON * effT[1]);
+      subLabel = '45V credit on H₂';
+    }
+    const mid = cdrCosts(costT[1], revT[1], sub);
+
+    const rand = mulberry32(hashId(cp.id));
+    const normal = makeNormal(rand);
+    const gamma = makeGamma(rand, normal);
+    const costs = pertDraws(costT[0], costT[1], costT[2], n, rand, normal, gamma);
+    const revs  = pertDraws(revT[0], revT[1], revT[2], n, rand, normal, gamma);
+    const draws = { gross: costs, net: new Float64Array(n), netWithSubsidy: new Float64Array(n) };
+    for (let i = 0; i < n; i++) {
+      draws.net[i] = costs[i] - revs[i];
+      draws.netWithSubsidy[i] = costs[i] - revs[i] - sub;
+    }
+    results.push({
+      def: cp, type: 'CDR', mid,
+      p10: bandOf(draws, 10), p90: bandOf(draws, 90),
+      effMid: effT[1], revMid: revT[1], subMid: sub, subLabel,
+    });
+  }
+  return results;
+}
+function bandOf(draws, q) {
+  return { gross: percentile(draws.gross, q), net: percentile(draws.net, q), netWithSubsidy: percentile(draws.netWithSubsidy, q) };
+}
+
+// ============================================================================
+// STATE
+// ============================================================================
+function defaultInputs() {
+  const inputs = { jetPrice: 3.00, z45Max: 1.00, q45: 85, useLca: false, ccsCost: 150,
+    h2Credit: 'q45', mfsp: {}, massYield: {}, lcaRed: {}, cdrCost: {}, cdrRev: {}, cdrEff: {} };
+  for (const sp of SAF_PATHWAYS) {
+    if (sp.id !== 'ftccs') inputs.mfsp[sp.id] = sp.mfsp[1]; // FT-SAF+CCS is derived: FT base + CCS adder
+    inputs.massYield[sp.id] = sp.massYield[1];
+    inputs.lcaRed[sp.id] = sp.lca[1];
+  }
+  for (const cp of CDR_PATHWAYS) {
+    inputs.cdrCost[cp.id] = cp.cost[1];
+    inputs.cdrRev[cp.id] = cp.rev[1];
+    inputs.cdrEff[cp.id] = cp.eff[1];
+  }
+  return inputs;
+}
+
+const state = {
+  inputs: defaultInputs(),
+  metric: 'netWithSubsidy',
+  showWhiskers: true,
+};
+
+const METRIC_LABEL = {
+  gross: 'Gross cost',
+  net: 'Net cost (after fuel / co-product revenue)',
+  netWithSubsidy: 'Net cost with subsidies (45Q + 45Z)',
+};
+
+// ============================================================================
+// CONTROLS
+// ============================================================================
+const fmt$ = (v, d = 0) => (v < 0 ? '−$' : '$') + Math.abs(v).toLocaleString('en-US', { maximumFractionDigits: d, minimumFractionDigits: d });
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+function sliderRow(opts) {
+  // opts: { key, label, sub, min, max, step, value, unit, cls, decimals }
+  const wrap = document.createElement('div');
+  wrap.className = 'ctl' + (opts.cls ? ' ' + opts.cls : '');
+  const dec = opts.decimals !== undefined ? opts.decimals : 2;
+  wrap.innerHTML = `
+    <div class="row1">
+      <label for="in-${opts.key}">${opts.label}</label>
+      <span style="white-space:nowrap">
+        <input type="number" id="in-${opts.key}" min="${opts.min}" max="${opts.max}" step="${opts.step}" value="${(+opts.value).toFixed(dec)}" aria-label="${opts.label} value">
+        <span style="font-size:11.5px;color:var(--ink-3)">${opts.unit || ''}</span>
+      </span>
+    </div>
+    ${opts.sub ? `<div class="sub">${opts.sub}</div>` : ''}
+    <input type="range" id="sl-${opts.key}" min="${opts.min}" max="${opts.max}" step="${opts.step}" value="${opts.value}" aria-label="${opts.label} slider">
+  `;
+  const num = wrap.querySelector('input[type=number]');
+  const sl = wrap.querySelector('input[type=range]');
+  const commit = (v) => {
+    v = Math.min(opts.max, Math.max(opts.min, v));
+    num.value = v.toFixed(dec);
+    sl.value = v;
+    opts.onChange(v);
+  };
+  sl.addEventListener('input', () => commit(parseFloat(sl.value)));
+  num.addEventListener('change', () => commit(parseFloat(num.value) || opts.value));
+  wrap._sync = (v) => { num.value = (+v).toFixed(dec); sl.value = v; };
+  return wrap;
+}
+
+const controlRegistry = []; // for reset/hash sync: {get, set(wrapEl sync)}
+
+function registerControl(el, getter) {
+  controlRegistry.push({ el, getter });
+}
+
+function buildControls() {
+  const g = document.getElementById('ctlGlobal');
+  g.innerHTML = '<h3>Market &amp; policy</h3>';
+  const globals = [
+    { key: 'jet', label: 'Jet fuel price', unit: '$/gal', min: 1.0, max: 6.0, step: 0.05,
+      sub: 'Revenue earned by every gallon of SAF sold', value: () => state.inputs.jetPrice,
+      set: v => { state.inputs.jetPrice = v; } },
+    { key: 'z45', label: '45Z credit, max', unit: '$/gal', min: 0, max: 1.75, step: 0.05,
+      sub: 'Clean Fuel Production Credit ceiling; scaled by fuel CI. $1.00 = current law, $1.75 = pre-OBBBA SAF rate, $0 = expiry after 2029',
+      value: () => state.inputs.z45Max, set: v => { state.inputs.z45Max = v; } },
+    { key: 'q45', label: '45Q credit', unit: '$/tCO₂', min: 0, max: 180, step: 5, decimals: 0,
+      sub: 'For geologically stored CO₂ (BECCS, WtE+CCS, FT-SAF+CCS)',
+      value: () => state.inputs.q45, set: v => { state.inputs.q45 = v; } },
+  ];
+  for (const def of globals) {
+    const row = sliderRow({ ...def, value: def.value(), onChange: v => { def.set(v); update(); } });
+    g.appendChild(row);
+    registerControl(row, def.value);
+  }
+
+  const s = document.getElementById('ctlSaf');
+  s.innerHTML = '<h3><span class="swatch" style="background:var(--saf)"></span>SAF production cost (MFSP)</h3>';
+  for (const sp of SAF_PATHWAYS) {
+    const block = document.createElement('div');
+    block.className = 'pathway-block';
+    let row;
+    if (sp.id === 'ftccs') {
+      // FT-SAF+CCS: cost is derived from FT-SAF base + a CCS cost slider
+      row = sliderRow({
+        key: 'ccscost', label: sp.short + ' — CCS cost', unit: '$/tCO₂', cls: 'saf',
+        min: 40, max: 400, step: 5, decimals: 0,
+        sub: 'Capture, transport &amp; storage per tCO₂ stored, added on top of the FT-SAF (ag/forest) cost above',
+        value: state.inputs.ccsCost,
+        onChange: v => { state.inputs.ccsCost = v; update(); },
+      });
+      registerControl(row, () => state.inputs.ccsCost);
+      const derived = document.createElement('div');
+      derived.className = 'sub';
+      derived.id = 'ftccsDerived';
+      derived.style.marginTop = '4px';
+      row.appendChild(derived);
+    } else {
+      row = sliderRow({
+        key: 'mfsp-' + sp.id, label: sp.short, unit: '$/gal', cls: 'saf',
+        min: 1, max: 18, step: 0.05,
+        sub: sp.note + (sp.id === 'ft' ? '; also the base cost for FT-SAF + CCS' : ''),
+        value: state.inputs.mfsp[sp.id],
+        onChange: v => { state.inputs.mfsp[sp.id] = v; update(); },
+      });
+      registerControl(row, () => state.inputs.mfsp[sp.id]);
+    }
+    block.appendChild(row);
+
+    const adv = document.createElement('details');
+    adv.className = 'adv';
+    adv.innerHTML = '<summary>More assumptions</summary>';
+    const yRow = sliderRow({
+      key: 'yield-' + sp.id, label: 'Mass yield', unit: 'kg/kg', cls: 'saf',
+      min: 0.04, max: 0.70, step: 0.005, decimals: 3,
+      value: state.inputs.massYield[sp.id],
+      onChange: v => { state.inputs.massYield[sp.id] = v; update(); },
+    });
+    registerControl(yRow, () => state.inputs.massYield[sp.id]);
+    const lRow = sliderRow({
+      key: 'lca-' + sp.id, label: 'Lifecycle GHG reduction', unit: 'fraction', cls: 'saf',
+      min: 0.30, max: 0.95, step: 0.01,
+      value: state.inputs.lcaRed[sp.id],
+      onChange: v => { state.inputs.lcaRed[sp.id] = v; update(); },
+    });
+    registerControl(lRow, () => state.inputs.lcaRed[sp.id]);
+    adv.append(yRow, lRow);
+    block.appendChild(adv);
+    s.appendChild(block);
+  }
+
+  const c = document.getElementById('ctlCdr');
+  c.innerHTML = '<h3><span class="swatch" style="background:var(--cdr)"></span>CDR total cost</h3>';
+  for (const cp of CDR_PATHWAYS) {
+    const block = document.createElement('div');
+    block.className = 'pathway-block';
+    const row = sliderRow({
+      key: 'cost-' + cp.id, label: cp.short, unit: '$/tCO₂', cls: 'cdr',
+      min: 40, max: 650, step: 5, decimals: 0,
+      sub: cp.feedstock + (cp.has45q ? ' · 45Q-eligible' : ''),
+      value: state.inputs.cdrCost[cp.id],
+      onChange: v => { state.inputs.cdrCost[cp.id] = v; update(); },
+    });
+    registerControl(row, () => state.inputs.cdrCost[cp.id]);
+    block.appendChild(row);
+
+    if (cp.id === 'beccsH2') {
+      const elect = document.createElement('div');
+      elect.className = 'ctl cdr';
+      elect.setAttribute('role', 'radiogroup');
+      elect.setAttribute('aria-label', 'Hydrogen tax credit election');
+      elect.innerHTML = `
+        <div class="sub" style="margin-bottom:4px">Tax credit election — facilities cannot claim both (§45V(d)(2)):</div>
+        <label class="radio-row"><input type="radio" name="h2credit" value="q45"> 45Q on stored CO₂ (uses slider above)</label>
+        <label class="radio-row"><input type="radio" name="h2credit" value="v45"> 45V on hydrogen ($3/kg; needs construction start before 2028)</label>`;
+      elect.querySelectorAll('input[name=h2credit]').forEach(rb => {
+        rb.addEventListener('change', () => { state.inputs.h2Credit = rb.value; update(); });
+      });
+      elect._sync = () => {
+        elect.querySelectorAll('input[name=h2credit]').forEach(rb => {
+          rb.checked = rb.value === state.inputs.h2Credit;
+        });
+      };
+      elect._sync();
+      controlRegistry.push({ el: elect, getter: () => state.inputs.h2Credit });
+      block.appendChild(elect);
+    }
+
+    const adv = document.createElement('details');
+    adv.className = 'adv';
+    adv.innerHTML = '<summary>More assumptions</summary>';
+    const eRow = sliderRow({
+      key: 'eff-' + cp.id, label: 'Capture efficiency', unit: 'fraction', cls: 'cdr',
+      min: 0.10, max: 0.98, step: 0.01,
+      value: state.inputs.cdrEff[cp.id],
+      onChange: v => { state.inputs.cdrEff[cp.id] = v; update(); },
+    });
+    registerControl(eRow, () => state.inputs.cdrEff[cp.id]);
+    const rRow = sliderRow({
+      key: 'rev-' + cp.id, label: 'Co-product revenue (' + cp.coproduct + ')', unit: '$/tCO₂', cls: 'cdr',
+      min: 0, max: 250, step: 1, decimals: 0,
+      sub: cp.id === 'beccsH2'
+        ? 'Default $130/tCO₂ ≈ $3.1/kg H₂ implied — a clean-H₂ premium between gray (~$1–2/kg) and green (~$4.50+/kg)'
+        : undefined,
+      value: state.inputs.cdrRev[cp.id],
+      onChange: v => { state.inputs.cdrRev[cp.id] = v; update(); },
+    });
+    registerControl(rRow, () => state.inputs.cdrRev[cp.id]);
+    adv.append(eRow, rRow);
+    block.appendChild(adv);
+    c.appendChild(block);
+  }
+}
+
+function syncControls() {
+  for (const { el, getter } of controlRegistry) el._sync(getter());
+}
+
+// ============================================================================
+// CHART HELPERS
+// ============================================================================
+const SVGNS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+// horizontal bar with 4px-rounded data end, square at the baseline (x0)
+function barPath(x0, x1, y, h) {
+  const r = Math.min(4, Math.abs(x1 - x0), h / 2);
+  if (x1 >= x0) {
+    return `M${x0},${y} H${x1 - r} a${r},${r} 0 0 1 ${r},${r} V${y + h - r} a${r},${r} 0 0 1 ${-r},${r} H${x0} Z`;
+  }
+  return `M${x0},${y} H${x1 + r} a${r},${r} 0 0 0 ${-r},${r} V${y + h - r} a${r},${r} 0 0 0 ${r},${r} H${x0} Z`;
+}
+function niceTicks(min, max, count) {
+  const span = max - min;
+  const step0 = span / count;
+  const mag = Math.pow(10, Math.floor(Math.log10(step0)));
+  let step = mag;
+  for (const m of [1, 2, 2.5, 5, 10]) if (mag * m >= step0) { step = mag * m; break; }
+  const ticks = [];
+  for (let t = Math.ceil(min / step) * step; t <= max + 1e-9; t += step) ticks.push(Math.round(t * 100) / 100);
+  return ticks;
+}
+
+const tooltip = document.getElementById('tooltip');
+function showTip(html, evt) {
+  tooltip.innerHTML = html;
+  tooltip.style.display = 'block';
+  moveTip(evt);
+}
+function moveTip(evt) {
+  const pad = 14;
+  const w = tooltip.offsetWidth, h = tooltip.offsetHeight;
+  let x = evt.clientX + pad, y = evt.clientY + pad;
+  if (x + w > innerWidth - 8) x = evt.clientX - w - pad;
+  if (y + h > innerHeight - 8) y = evt.clientY - h - pad;
+  tooltip.style.left = x + 'px';
+  tooltip.style.top = y + 'px';
+}
+function hideTip() { tooltip.style.display = 'none'; }
+
+function attachTip(node, htmlFn) {
+  node.addEventListener('pointerenter', e => showTip(htmlFn(), e));
+  node.addEventListener('pointermove', moveTip);
+  node.addEventListener('pointerleave', hideTip);
+  node.setAttribute('tabindex', '0');
+  node.addEventListener('focus', () => {
+    const r = node.getBoundingClientRect();
+    showTip(htmlFn(), { clientX: r.right, clientY: r.top + r.height / 2 });
+  });
+  node.addEventListener('blur', hideTip);
+}
+
+// ============================================================================
+// COST CHART
+// ============================================================================
+function groupedRows(results) {
+  const byId = Object.fromEntries(results.map(r => [r.def.id, r]));
+  const pick = ids => ids.map(id => byId[id]);
+  return [
+    { label: 'Cellulosic feedstocks — SAF', rows: pick(['ft', 'ftccs', 'ftsw', 'atj']) },
+    { label: 'Cellulosic feedstocks — CDR', rows: pick(['beccsE', 'beccsH', 'beccsH2', 'biooil', 'biochar']) },
+    { label: 'Lipid feedstocks', rows: pick(['hefa', 'biooilHtl']) },
+    { label: 'Other feedstocks — CDR', rows: pick(['wte', 'injection', 'burial']) },
+  ];
+}
+
+function tipForResult(r, metric) {
+  const m = r.mid;
+  if (r.type === 'SAF') {
+    const rows = [
+      ['Gross production cost', fmt$(m.grossPerT)],
+      ['− Jet fuel revenue', fmt$(-m.fuelRevPerT)],
+      ['− 45Z credit', fmt$(-m.zCreditPerT)],
+    ];
+    if (m.qCreditPerT > 0) rows.push(['− 45Q on stored CO₂', fmt$(-m.qCreditPerT)]);
+    return `<h4>${esc(r.def.name)}</h4>
+      <table>${rows.map(x => `<tr><td>${x[0]}</td><td>${x[1]}</td></tr>`).join('')}
+      <tr class="total"><td>Net + subsidies</td><td>${fmt$(m.netWithSubsidy)}/tCO₂</td></tr></table>
+      <div class="muted" style="margin-top:6px">${m.gallons.toFixed(0)} gal/dry ton · ${m.co2Total.toFixed(2)} tCO₂ benefit/dry ton
+      ${m.co2Removed > 0 ? `(${m.co2Avoided.toFixed(2)} avoided + ${m.co2Removed.toFixed(2)} stored)` : ''}</div>
+      <div class="muted">P10–P90: ${fmt$(r.p10[metric])} – ${fmt$(r.p90[metric])}</div>`;
+  }
+  const rows = [
+    ['Gross cost', fmt$(r.mid.gross)],
+    ['− Co-product revenue', fmt$(-(r.mid.gross - r.mid.net))],
+    ['− ' + (r.subLabel || '45Q credit'), fmt$(-(r.mid.net - r.mid.netWithSubsidy))],
+  ];
+  return `<h4>${esc(r.def.name)}</h4>
+    <table>${rows.map(x => `<tr><td>${x[0]}</td><td>${x[1]}</td></tr>`).join('')}
+    <tr class="total"><td>Net + subsidies</td><td>${fmt$(r.mid.netWithSubsidy)}/tCO₂</td></tr></table>
+    <div class="muted" style="margin-top:6px">${(C.CO2E_PER_DRY_TON * r.effMid).toFixed(2)} tCO₂ removed/dry ton (${Math.round(r.effMid * 100)}% capture)</div>
+    <div class="muted">P10–P90: ${fmt$(r.p10[metric])} – ${fmt$(r.p90[metric])}</div>`;
+}
+
+function renderCostChart(results) {
+  const svg = document.getElementById('costChart');
+  svg.textContent = '';
+  const metric = state.metric;
+  const groups = groupedRows(results);
+
+  const rowH = 30, headerH = 26, gapAfterGroup = 10;
+  const ml = 172, mr = 64, mt = 8, mb = 30;
+  const W = 900;
+  let y = mt;
+  const layout = [];
+  for (const g of groups) {
+    layout.push({ header: g.label, y });
+    y += headerH;
+    for (const r of g.rows) { layout.push({ r, y }); y += rowH; }
+    y += gapAfterGroup;
+  }
+  const H = y + mb;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  // domain
+  let lo = 0, hi = 0;
+  for (const r of results) {
+    lo = Math.min(lo, r.mid[metric], state.showWhiskers ? r.p10[metric] : r.mid[metric]);
+    hi = Math.max(hi, r.mid[metric], state.showWhiskers ? r.p90[metric] : r.mid[metric]);
+  }
+  hi = Math.max(hi, 220); // keep SCC lines visible
+  const span = hi - lo || 1;
+  lo -= span * 0.02; hi += span * 0.09;
+  const x = v => ml + (v - lo) / (hi - lo) * (W - ml - mr);
+
+  // gridlines + axis
+  for (const t of niceTicks(lo, hi, 6)) {
+    el('line', { x1: x(t), x2: x(t), y1: mt, y2: H - mb, stroke: 'var(--grid)', 'stroke-width': 1 }, svg);
+    el('text', { x: x(t), y: H - mb + 16, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--ink-3)' }, svg)
+      .textContent = '$' + t.toLocaleString();
+  }
+  // SCC reference lines
+  for (const scc of [50, 200]) {
+    if (scc > lo && scc < hi) {
+      el('line', { x1: x(scc), x2: x(scc), y1: mt, y2: H - mb, stroke: 'var(--ink-3)', 'stroke-width': 1, 'stroke-dasharray': '3,4', opacity: 0.7 }, svg);
+      el('text', { x: x(scc) + 3, y: mt + 9, 'font-size': 9.5, fill: 'var(--ink-3)' }, svg).textContent = 'SCC $' + scc;
+    }
+  }
+  // zero baseline
+  el('line', { x1: x(0), x2: x(0), y1: mt, y2: H - mb, stroke: 'var(--baseline)', 'stroke-width': 1.2 }, svg);
+  el('text', { x: W - mr + 4, y: H - mb + 16, 'font-size': 10.5, fill: 'var(--ink-3)' }, svg).textContent = '$/tCO₂';
+
+  for (const item of layout) {
+    if (item.header) {
+      const t = el('text', { x: 2, y: item.y + headerH - 9, 'font-size': 11, fill: 'var(--ink-2)', 'font-weight': 600, 'font-style': 'italic' }, svg);
+      t.textContent = item.header;
+      continue;
+    }
+    const r = item.r;
+    const val = r.mid[metric];
+    const barH = 18;
+    const by = item.y + (rowH - barH) / 2;
+    const color = r.type === 'SAF' ? 'var(--saf)' : 'var(--cdr)';
+
+    const gEl = el('g', { class: 'bar-hit', role: 'img', 'aria-label': `${r.def.name}: ${fmt$(val)} per tonne CO2` }, svg);
+    // row label
+    const lbl = el('text', { x: ml - 8, y: by + barH / 2 + 4, 'text-anchor': 'end', 'font-size': 12, fill: 'var(--ink)' }, gEl);
+    lbl.textContent = r.def.short;
+    // bar
+    el('path', { d: barPath(x(0), x(val), by, barH), fill: color, class: 'bar-main' }, gEl);
+    // whiskers (P10–P90)
+    if (state.showWhiskers) {
+      const cy = by + barH / 2;
+      const xa = x(r.p10[metric]), xb = x(r.p90[metric]);
+      el('line', { x1: xa, x2: xb, y1: cy, y2: cy, stroke: 'var(--ink-2)', 'stroke-width': 1.3, opacity: 0.85 }, gEl);
+      for (const xx of [xa, xb])
+        el('line', { x1: xx, x2: xx, y1: cy - 4, y2: cy + 4, stroke: 'var(--ink-2)', 'stroke-width': 1.3, opacity: 0.85 }, gEl);
+    }
+    // value label at the tip (outside bar, past whisker end)
+    const tipX = state.showWhiskers ? Math.max(x(val), x(r.p90[metric])) : x(val);
+    el('text', { x: tipX + 7, y: by + barH / 2 + 4, 'font-size': 11.5, 'font-weight': 600, fill: 'var(--ink)', style: 'font-variant-numeric:tabular-nums' }, gEl)
+      .textContent = fmt$(val);
+    // invisible hit rect spanning the row
+    const hit = el('rect', { x: 0, y: item.y, width: W, height: rowH, fill: 'transparent' }, gEl);
+    attachTip(gEl, () => tipForResult(r, metric));
+  }
+}
+
+// ============================================================================
+// CARBON CHART
+// ============================================================================
+function renderCarbonChart(results) {
+  const svg = document.getElementById('carbonChart');
+  svg.textContent = '';
+  const useLca = state.inputs.useLca;
+  const byId = Object.fromEntries(results.map(r => [r.def.id, r]));
+  const ids = ['ft', 'ftccs', 'ftsw', 'atj', 'beccsE', 'beccsH', 'beccsH2', 'biooil', 'biochar', 'burial'];
+  const rows = ids.map(id => byId[id]);
+
+  const rowH = 30, ml = 172, mr = 60, mt = 22, mb = 30, W = 900;
+  const H = mt + rows.length * rowH + mb;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  // compute segments per row
+  const NET_NEG = 0.95;
+  const segRows = rows.map(r => {
+    let stored = 0, avoided = 0;
+    if (r.type === 'SAF') {
+      stored = r.mid.co2Removed * (useLca ? NET_NEG : 1);
+      avoided = r.mid.co2Avoided; // already LCA-scaled when toggle is on
+    } else {
+      stored = C.CO2E_PER_DRY_TON * r.effMid * (useLca ? NET_NEG : 1);
+      avoided = useLca ? r.def.avoidedPerDt : 0;
+    }
+    const grossStored = r.type === 'SAF' ? r.mid.co2Removed : C.CO2E_PER_DRY_TON * r.effMid;
+    const released = Math.max(0, C.CO2E_PER_DRY_TON - grossStored);
+    return { r, stored, avoided, released, total: stored + avoided };
+  });
+
+  const maxX = Math.max(C.CO2E_PER_DRY_TON, ...segRows.map(s => C.CO2E_PER_DRY_TON + s.avoided)) * 1.10;
+  const x = v => ml + v / maxX * (W - ml - mr);
+
+  for (const t of niceTicks(0, maxX, 6)) {
+    el('line', { x1: x(t), x2: x(t), y1: mt, y2: H - mb, stroke: 'var(--grid)', 'stroke-width': 1 }, svg);
+    el('text', { x: x(t), y: H - mb + 16, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--ink-3)' }, svg)
+      .textContent = t.toFixed(1);
+  }
+  el('text', { x: W - mr + 4, y: H - mb + 16, 'font-size': 10.5, fill: 'var(--ink-3)' }, svg).textContent = 'tCO₂/dt';
+  // biomass carbon reference
+  el('line', { x1: x(C.CO2E_PER_DRY_TON), x2: x(C.CO2E_PER_DRY_TON), y1: mt - 6, y2: H - mb, stroke: 'var(--ink-2)', 'stroke-width': 1, 'stroke-dasharray': '3,4' }, svg);
+  el('text', { x: x(C.CO2E_PER_DRY_TON), y: mt - 9, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--ink-2)' }, svg)
+    .textContent = `all carbon in one dry ton = ${C.CO2E_PER_DRY_TON.toFixed(2)} tCO₂e`;
+  el('line', { x1: x(0), x2: x(0), y1: mt, y2: H - mb, stroke: 'var(--baseline)', 'stroke-width': 1.2 }, svg);
+
+  const GAP = 2;
+  segRows.forEach((s, i) => {
+    const by = mt + i * rowH + (rowH - 18) / 2;
+    const barH = 18;
+    const gEl = el('g', { class: 'bar-hit' }, svg);
+    el('text', { x: ml - 8, y: by + barH / 2 + 4, 'text-anchor': 'end', 'font-size': 12, fill: 'var(--ink)' }, gEl)
+      .textContent = s.r.def.short;
+
+    // segments: stored | released (to 1.833) | avoided beyond
+    let cursor = 0;
+    if (s.stored > 0.005) {
+      el('path', { d: barPath(x(0), x(s.stored) - GAP / 2, by, barH), fill: 'var(--cdr)', class: 'bar-main' }, gEl);
+      cursor = s.stored;
+    }
+    const grossStored = C.CO2E_PER_DRY_TON - s.released;
+    if (s.released > 0.005) {
+      el('rect', { x: x(grossStored) + GAP / 2, y: by, width: Math.max(0, x(C.CO2E_PER_DRY_TON) - x(grossStored) - GAP), height: barH, rx: 2, fill: 'var(--released)' }, gEl);
+    }
+    if (s.avoided > 0.005) {
+      el('path', { d: barPath(x(C.CO2E_PER_DRY_TON) + GAP / 2, x(C.CO2E_PER_DRY_TON + s.avoided), by, barH), fill: 'var(--saf)', class: 'bar-main' }, gEl);
+    }
+    // total climate benefit label
+    el('text', { x: x(C.CO2E_PER_DRY_TON + s.avoided) + 7, y: by + barH / 2 + 4, 'font-size': 11.5, 'font-weight': 600, fill: 'var(--ink)', style: 'font-variant-numeric:tabular-nums' }, gEl)
+      .textContent = s.total.toFixed(2);
+    el('rect', { x: 0, y: mt + i * rowH, width: W, height: rowH, fill: 'transparent' }, gEl);
+    attachTip(gEl, () => `<h4>${esc(s.r.def.name)}</h4><table>
+      <tr><td>CO₂ stored${useLca ? ' (net of 95% negativity)' : ''}</td><td>${s.stored.toFixed(2)}</td></tr>
+      <tr><td>CO₂ avoided${useLca && s.r.type === 'SAF' ? ' (lifecycle-adjusted)' : ''}</td><td>${s.avoided.toFixed(2)}</td></tr>
+      <tr><td>CO₂ released</td><td>${s.released.toFixed(2)}</td></tr>
+      <tr class="total"><td>Total climate benefit</td><td>${s.total.toFixed(2)} tCO₂/dt</td></tr></table>`);
+  });
+}
+
+// ============================================================================
+// TILES & TABLE
+// ============================================================================
+function renderTiles(results) {
+  // Benchmarks are the most common pathways today, not the cheapest options:
+  // FT-SAF (ag/forest waste) for SAF, BECCS (electricity) for CDR.
+  const metric = state.metric;
+  const saf = results.find(r => r.def.id === 'ft');
+  const cdr = results.find(r => r.def.id === 'beccsE');
+  const gap = saf.mid[metric] - cdr.mid[metric];
+
+  const useLca = state.inputs.useLca;
+  const NET_NEG = 0.95;
+  const cdrCarbon = C.CO2E_PER_DRY_TON * cdr.effMid * (useLca ? NET_NEG : 1) + (useLca ? cdr.def.avoidedPerDt : 0);
+  const ratio = cdrCarbon / saf.mid.co2Total;
+
+  const tiles = [
+    { label: 'SAF benchmark', dot: 'var(--saf)', value: fmt$(saf.mid[metric]) + '/t',
+      sub: 'FT-SAF (ag/forest waste), the leading cellulosic SAF route' },
+    { label: 'CDR benchmark', dot: 'var(--cdr)', value: fmt$(cdr.mid[metric]) + '/t',
+      sub: 'BECCS (electricity), the most common BiCRS pathway today' },
+    { label: 'Cost gap, same biomass', dot: null,
+      value: (gap >= 0 ? '+' : '−') + fmt$(Math.abs(gap)),
+      sub: gap >= 0 ? 'BECCS (electricity) is cheaper per tCO₂ than FT-SAF' : 'FT-SAF is cheaper per tCO₂ than BECCS (electricity)' },
+    { label: 'CDR carbon leverage', dot: null, value: ratio.toFixed(1) + '×',
+      sub: 'BECCS (electricity) benefit per dry ton vs FT-SAF' },
+  ];
+  document.getElementById('tiles').innerHTML = tiles.map(t => `
+    <div class="tile">
+      <div class="t-label">${t.dot ? `<span class="dot" style="background:${t.dot}"></span>` : ''}${t.label}</div>
+      <div class="t-value">${t.value}</div>
+      <div class="t-sub">${esc(t.sub)}</div>
+    </div>`).join('');
+}
+
+function renderTable(results) {
+  const metric = state.metric;
+  const groups = groupedRows(results);
+  let html = `<thead><tr>
+    <th>Pathway</th><th>Gross</th><th>Net</th><th>Net + subsidies</th>
+    <th>P10–P90 (${metric === 'gross' ? 'gross' : metric === 'net' ? 'net' : 'net+sub'})</th>
+    <th>tCO₂ benefit / dry ton</th></tr></thead><tbody>`;
+  for (const g of groups) {
+    for (const r of g.rows) {
+      const co2 = r.type === 'SAF' ? r.mid.co2Total : C.CO2E_PER_DRY_TON * r.effMid;
+      html += `<tr>
+        <td>${esc(r.def.name)}<span class="type-pill ${r.type === 'SAF' ? 'saf' : 'cdr'}">${r.type === 'SAF' && r.def.cdrEff > 0 ? 'SAF+CDR' : r.type}</span></td>
+        <td>${fmt$(r.mid.gross)}</td>
+        <td>${fmt$(r.mid.net)}</td>
+        <td>${fmt$(r.mid.netWithSubsidy)}</td>
+        <td>${fmt$(r.p10[metric])} – ${fmt$(r.p90[metric])}</td>
+        <td>${co2.toFixed(2)}</td>
+      </tr>`;
+    }
+  }
+  document.getElementById('dataTable').innerHTML = html + '</tbody>';
+}
+
+// ============================================================================
+// URL STATE (shareable scenarios)
+// ============================================================================
+function writeHash() {
+  try {
+    const payload = { i: state.inputs, m: state.metric, w: state.showWhiskers };
+    history.replaceState(null, '', '#s=' + btoa(JSON.stringify(payload)));
+  } catch (e) { /* ignore */ }
+}
+function readHash() {
+  try {
+    const m = location.hash.match(/#s=(.+)/);
+    if (!m) return;
+    const p = JSON.parse(atob(m[1]));
+    const d = defaultInputs();
+    if (p.i && typeof p.i === 'object') {
+      for (const k of ['jetPrice', 'z45Max', 'q45', 'useLca', 'ccsCost']) if (k in p.i) d[k] = p.i[k];
+      if (['q45', 'v45'].includes(p.i.h2Credit)) d.h2Credit = p.i.h2Credit;
+      for (const grp of ['mfsp', 'massYield', 'lcaRed', 'cdrCost', 'cdrRev', 'cdrEff'])
+        for (const id in d[grp]) if (p.i[grp] && typeof p.i[grp][id] === 'number') d[grp][id] = p.i[grp][id];
+      state.inputs = d;
+    }
+    if (['gross', 'net', 'netWithSubsidy'].includes(p.m)) state.metric = p.m;
+    if (typeof p.w === 'boolean') state.showWhiskers = p.w;
+  } catch (e) { /* malformed hash: ignore */ }
+}
+
+// ============================================================================
+// UPDATE LOOP
+// ============================================================================
+let raf = null;
+function update() {
+  if (raf) return;
+  raf = requestAnimationFrame(() => {
+    raf = null;
+    const results = evalScenario(state.inputs);
+    const d = ftccsMfsp(state.inputs);
+    const derivedEl = document.getElementById('ftccsDerived');
+    if (derivedEl) derivedEl.textContent =
+      `Resulting MFSP: $${d.base.toFixed(2)} base + $${d.ccsAdder.toFixed(2)} CCS = $${d.total.toFixed(2)}/gal`;
+    renderTiles(results);
+    renderCostChart(results);
+    renderCarbonChart(results);
+    renderTable(results);
+    document.getElementById('costSub').textContent =
+      METRIC_LABEL[state.metric] + ', central estimate with P10–P90 Monte Carlo range. ' +
+      (state.inputs.useLca
+        ? 'Full lifecycle accounting: SAF benefit reduced by lifecycle emissions.'
+        : 'Simple displacement accounting: SAF credited with full fossil-jet emissions.') +
+      ' Dashed lines mark $50 and $200 social cost of carbon.';
+    document.getElementById('carbonSub').textContent =
+      'Where the 1.83 tCO₂e in each dry ton ends up, plus avoided fossil emissions beyond it. ' +
+      (state.inputs.useLca
+        ? 'Full accounting: storage at 95% net-negativity, SAF avoidance lifecycle-adjusted, CDR co-product displacement credited.'
+        : 'Simple accounting: gross storage and full displacement credit.') +
+      ' Cellulosic and woody feedstock pathways only.';
+    writeHash();
+  });
+}
+
+// view controls
+document.getElementById('metricSeg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  state.metric = b.dataset.metric;
+  for (const btn of e.currentTarget.querySelectorAll('button'))
+    btn.setAttribute('aria-pressed', btn === b ? 'true' : 'false');
+  update();
+});
+document.getElementById('lcaSeg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  state.inputs.useLca = b.dataset.lca === '1';
+  for (const btn of e.currentTarget.querySelectorAll('button'))
+    btn.setAttribute('aria-pressed', btn === b ? 'true' : 'false');
+  update();
+});
+document.getElementById('whiskerToggle').addEventListener('change', e => {
+  state.showWhiskers = e.target.checked;
+  update();
+});
+document.getElementById('resetBtn').addEventListener('click', () => {
+  state.inputs = defaultInputs();
+  syncControls();
+  document.querySelectorAll('#lcaSeg button').forEach(b =>
+    b.setAttribute('aria-pressed', b.dataset.lca === '0' ? 'true' : 'false'));
+  update();
+});
+document.getElementById('copyBtn').addEventListener('click', async e => {
+  writeHash();
+  try {
+    await navigator.clipboard.writeText(location.href);
+    e.target.textContent = 'Link copied';
+    setTimeout(() => { e.target.textContent = 'Copy scenario link'; }, 1600);
+  } catch (err) {
+    e.target.textContent = 'Copy failed — copy the URL bar';
+  }
+});
+
+// boot
+readHash();
+buildControls();
+syncControls();
+document.querySelectorAll('#metricSeg button').forEach(b =>
+  b.setAttribute('aria-pressed', b.dataset.metric === state.metric ? 'true' : 'false'));
+document.querySelectorAll('#lcaSeg button').forEach(b =>
+  b.setAttribute('aria-pressed', (b.dataset.lca === '1') === state.inputs.useLca ? 'true' : 'false'));
+document.getElementById('whiskerToggle').checked = state.showWhiskers;
+update();
+</script>
+
+</body>
+</html>
