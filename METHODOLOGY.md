@@ -277,20 +277,20 @@ These avoided emissions are not included in the $/tCO2 cost metric (which is per
 
 | Parameter | P10 | P50 | P90 | Notes |
 |-----------|-----|-----|-----|-------|
-| CDR efficiency | 0.35 | 0.45 | 0.55 | Limited by pyrolysis conversion |
+| CDR efficiency | 0.55 | 0.65 | 0.75 | Fraction of biomass C retained in stable bio-oil |
 | Total cost ($/tCO2) | 250 | 350 | 500 | Current Frontier offtake pricing |
 | Co-product revenue ($/tCO2) | 0 | 10 | 20 | Nutrient return to soil |
 | 45Q subsidy ($/tCO2) | 0 | 0 | 0 | Not eligible |
 
 **Derived (mid values):**
-- tCO2 removed per dry ton: 0.825
+- tCO2 removed per dry ton: 1.19
 - Net $/tCO2: $340
 
 #### Bio-oil Sequestration (HTL, Lipid Feedstock)
 
 | Parameter | P10 | P50 | P90 | Notes |
 |-----------|-----|-----|-----|-------|
-| CDR efficiency | 0.35 | 0.45 | 0.55 | |
+| CDR efficiency | 0.55 | 0.65 | 0.75 | Fraction of biomass C retained in stable bio-oil |
 | Total cost ($/tCO2) | 225 | 325 | 475 | Slightly lower than cellulosic |
 | Co-product revenue ($/tCO2) | 0 | 10 | 20 | Nutrient return |
 | 45Q subsidy ($/tCO2) | 0 | 0 | 0 | Not eligible |
@@ -433,8 +433,8 @@ These reduce the effective tCO2 avoided, increasing SAF's $/tCO2 by 15-50% depen
 | BECCS (heat) | CDR | $285 | $260 | $175 | 1.650 |
 | BECCS (hydrogen) | CDR | $300 | $170 | $85 | 1.192 |
 | WtE + CCS | CDR | $300 | $260 | $175 | 1.467 |
-| Bio-oil seq. (cellulosic) | CDR | $350 | $340 | $340 | 0.825 |
-| Bio-oil seq. (HTL, lipid) | CDR | $325 | $315 | $315 | 0.825 |
+| Bio-oil seq. (cellulosic) | CDR | $350 | $340 | $340 | 1.19 |
+| Bio-oil seq. (HTL, lipid) | CDR | $325 | $315 | $315 | 1.19 |
 | Biomass injection | CDR | $200 | $200 | $200 | 1.687 |
 | Biochar | CDR | $200 | $180 | $180 | 0.550 |
 | Biomass burial | CDR | $150 | $150 | $150 | 1.742 |
