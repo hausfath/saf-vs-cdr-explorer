@@ -26,23 +26,21 @@
     --serif: "Charter", "Iowan Old Style", Georgia, serif;
     --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --paper: #0d0d0d;
-      --surface: #1a1a19;
-      --ink: #f2f1ea;
-      --ink-2: #c3c2b7;
-      --ink-3: #898781;
-      --grid: #2c2c2a;
-      --baseline: #383835;
-      --border: rgba(255,255,255,0.10);
-      --saf: #3987e5;
-      --saf-soft: rgba(57,135,229,0.20);
-      --cdr: #009e00;
-      --cdr-soft: rgba(0,158,0,0.16);
-      --released: #33332f;
-      --track: #2c2c2a;
-    }
+  :root[data-theme="dark"] {
+    --paper: #0d0d0d;
+    --surface: #1a1a19;
+    --ink: #f2f1ea;
+    --ink-2: #c3c2b7;
+    --ink-3: #898781;
+    --grid: #2c2c2a;
+    --baseline: #383835;
+    --border: rgba(255,255,255,0.10);
+    --saf: #3987e5;
+    --saf-soft: rgba(57,135,229,0.20);
+    --cdr: #009e00;
+    --cdr-soft: rgba(0,158,0,0.16);
+    --released: #33332f;
+    --track: #2c2c2a;
   }
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
@@ -54,6 +52,32 @@
     font-size: 14px;
     line-height: 1.45;
   }
+  #themeToggle {
+    position: fixed;
+    top: 14px;
+    right: 16px;
+    z-index: 40;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font: inherit;
+    font-size: 12.5px;
+    color: var(--ink-2);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 13px 6px 11px;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  #themeToggle:hover { color: var(--ink); border-color: var(--ink-3); }
+  #themeToggle svg { width: 15px; height: 15px; display: block; }
+  #themeToggle .icon-moon { display: none; }
+  :root[data-theme="dark"] #themeToggle .icon-sun { display: none; }
+  :root[data-theme="dark"] #themeToggle .icon-moon { display: block; }
+  #themeToggle .tlabel::after { content: "Dark"; }
+  :root[data-theme="dark"] #themeToggle .tlabel::after { content: "Light"; }
+  @media (max-width: 560px) { #themeToggle .tlabel { display: none; } }
   .masthead {
     max-width: 1240px;
     margin: 0 auto;
@@ -438,6 +462,17 @@
   }
   :focus-visible { outline: 2px solid var(--saf); outline-offset: 2px; }
 </style>
+
+<button id="themeToggle" type="button" aria-pressed="false" title="Toggle dark mode">
+  <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="4"></circle>
+    <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
+  </svg>
+  <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path>
+  </svg>
+  <span class="tlabel"></span>
+</button>
 
 <header class="masthead">
   <p class="kicker">Interactive analysis &middot; Biomass carbon economics</p>
@@ -1437,6 +1472,24 @@ document.getElementById('copyBtn').addEventListener('click', async e => {
     e.target.textContent = 'Copy failed — copy the URL bar';
   }
 });
+
+// theme toggle (light default; choice persisted, OS preference not auto-applied)
+(function () {
+  const root = document.documentElement;
+  const btn = document.getElementById('themeToggle');
+  let saved = null;
+  try { saved = localStorage.getItem('saf_theme'); } catch (e) { /* sandboxed */ }
+  const apply = t => {
+    root.setAttribute('data-theme', t);
+    btn.setAttribute('aria-pressed', t === 'dark' ? 'true' : 'false');
+  };
+  apply(saved === 'dark' ? 'dark' : 'light');
+  btn.addEventListener('click', () => {
+    const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    apply(next);
+    try { localStorage.setItem('saf_theme', next); } catch (e) { /* sandboxed */ }
+  });
+})();
 
 // boot
 readHash();
