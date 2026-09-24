@@ -6,6 +6,8 @@ This analysis compares the cost-effectiveness ($/tCO2) of using waste and residu
 
 The core question: **When, if ever, does SAF provide a cost-competitive decarbonization strategy compared to more direct CDR approaches?**
 
+> **September 2026 update.** SAF-side assumptions were recalibrated against current literature, market data and statute, and several model bugs were fixed. CDR costs are unchanged (calibrated to Frontier offtake data). Every number in this document is generated from the explorer (`index.html`) defaults. See [Changelog: September 2026](#changelog-september-2026) at the end for the full list and the effect of each change.
+
 ---
 
 ## Key Metric
@@ -32,7 +34,8 @@ For SAF+CCS, the denominator includes **both** CO2 avoided (fuel displacement) a
 | Carbon content of oven-dry biomass | 0.50 tC/t | BiCRS Roadmap |
 | CO2:C molecular weight ratio | 3.667 (44/12) | Chemistry |
 | CO2e per dry ton of biomass | 1.833 tCO2 | Derived |
-| CO2 per gallon of fossil jet fuel | 9.75 kg | EIA |
+| CO2 per gallon of fossil jet fuel (combustion) | 9.75 kg | EIA |
+| Fossil jet well-to-wake baseline | 89 gCO2e/MJ ≈ 11.66 kg CO2e/gal | ICAO CORSIA (LHV 43.2 MJ/kg) |
 | Jet fuel density | 0.8 kg/L | Standard |
 | Liters per gallon | 3.79 | Standard |
 | Net negativity (CDR process efficiency) | 95% | Assumed; net removals = 95% of gross stored |
@@ -51,23 +54,24 @@ SAF costs are expressed as **Minimum Fuel Selling Price (MFSP)** in $/gallon. MF
 
 No separate feedstock cost is added to avoid double-counting.
 
-For **SAF + CCS**, the MFSP includes the full CCS chain cost (capture, compression, transport, and geological storage). The CCS increment is based on $100-250/tCO2 for the full chain, applied to the CO2 captured per dry ton.
+For **SAF + CCS**, the MFSP is the FT-SAF MFSP plus the full CCS chain cost (compression, transport, and geological storage; capture is part of the gasification process) of $40–120/tCO2 (P50 $70), applied to the CO2 stored per gallon.
 
 ### Emissions Accounting
 
-The **base analysis** uses simple displacement: each gallon of SAF produced avoids 9.75 kg CO2 that would have been emitted by burning fossil jet fuel. This is a simplification — SAF has upstream lifecycle emissions from feedstock collection, transport, and conversion energy.
+Two accounting bases are offered. **Full lifecycle is the default** (September 2026 onward).
 
-A **sensitivity analysis** (Figure 7) applies lifecycle GHG reduction factors to show the impact of upstream emissions on results. A 95% net negativity factor is also applied to all CDR pathways.
+- **Full lifecycle (default):** each gallon of SAF avoids `lifecycle GHG reduction × 11.66 kg CO2e`, where 11.66 kg CO2e/gal is the ICAO CORSIA well-to-wake fossil jet baseline (89 gCO2e/MJ × 43.2 MJ/kg × 3.03 kg/gal). CDR storage (and the stored CO2 of FT-SAF+CCS) is multiplied by a 95% net-negativity factor, and CDR energy co-products are credited with the fossil emissions they displace in the per-dry-ton carbon chart.
+- **Simple displacement:** each gallon avoids the 9.75 kg CO2 released by burning fossil jet (EIA), with no upstream emissions on either side; CDR storage is gross.
 
-### 45Z Clean Fuel Production Credit (SAF subsidy)
+*Bug fixed September 2026:* earlier versions multiplied the lifecycle reduction by the 9.75 kg combustion-only figure, mixing a well-to-wake percentage with a combustion-only baseline. That understated SAF's lifecycle benefit by 16% (9.75 / 11.66) and overstated its $/tCO2 by ~19%.
 
-The SAF subsidy is the **Section 45Z Clean Fuel Production Credit**, not the legacy blender's tax credit (§40B/§6426), which expired at the end of 2024. Following the One Big Beautiful Bill Act (Pub. L. 119-21, July 2025):
+### Tax credits (post-OBBBA, Pub. L. 119-21)
 
-- The SAF-specific rate (formerly up to $1.75/gal) was **removed**. For fuel produced after 2025-12-31, SAF uses the general applicable amount of **$1.00/gal** with prevailing-wage & apprenticeship compliance ($0.20/gal otherwise); we assume compliance.
-- The credit is extended to fuel sold through **2029**.
-- The credit is **not flat**: it equals the applicable amount × an emissions factor `(50 − CI) / 50`, where CI is the fuel's carbon intensity in kg CO2e/mmBTU, floored at 0 and capped at 1.0.
+**45Z Clean Fuel Production Credit.** For fuel produced after 2025-12-31 the SAF-specific rate is gone; SAF earns the general applicable amount of **$1.00/gal** with prevailing-wage and apprenticeship compliance ($0.20/gal otherwise), inflation-adjusted, for fuel sold through **2029-12-31** (26 USC 45Z(g)). The credit is `applicable amount × (50 − CI)/50`, CI in kg CO2e/mmBTU. OBBBA added: a zero floor on emissions rates except manure-derived fuels (45Z(b)(1)(E)); exclusion of ILUC emissions (45Z(b)(1)(B)(iv)); and a requirement that feedstock be "produced or grown in the United States, Mexico, or Canada" (45Z(f)(1)(A)(iii)). SAF CI may be determined with CORSIA or a similar methodology (45ZCF-GREET) (45Z(b)(1)(B)(iii)). We convert each pathway's lifecycle reduction to CI against 89 gCO2e/MJ (93.9 kg/mmBTU). At the new default reductions: FT-SAF ~$0.81/gal, HEFA ~$0.59/gal, AtJ ~$0.34/gal, FT-SAF (switchgrass) ~$0.62/gal. The credit is recomputed for every Monte Carlo draw.
 
-We convert each pathway's lifecycle GHG reduction to an absolute CI against the ICAO CORSIA petroleum-jet baseline of **89 gCO2e/MJ (≈93.9 kg CO2e/mmBTU)**. A 70% reduction yields ~$0.44/gal; 85% yields ~$0.72/gal; below ~47% reduction the credit is zero. In the Monte Carlo the credit is **stochastic**, computed from each draw's sampled lifecycle reduction (perfectly correlated with the fuel's carbon intensity). This replaces the previous flat $1.25/gal assumption and materially raises SAF's net+subsidy $/tCO2.
+**No 45Z + 45Q stacking.** A "qualified facility" for 45Z "does not include any facility for which ... (iii) The credit for carbon oxide sequestration under section 45Q" is allowed for the taxable year (26 USC 45Z(d)(4)(B)). Treasury's proposed 45Z regulations (91 FR 5160, Feb 2026) call 45V, the 48(a)(15) election and 45Q the "anti-stacking credits." *Bug fixed September 2026:* earlier versions credited FT-SAF+CCS with both 45Z and 45Q, overstating its subsidy by ~$16/tCO2. FT-SAF+CCS now carries an election: **45Q on stored CO2 (default; ~$84 per dry ton)** or **45Z alone with CCS counted in the fuel's CI** (CCS drives CI to the zero floor, so the factor caps at 1.0: ~$56 per dry ton at $1.00/gal). Whether 45ZCF-GREET/CORSIA will score a specific FT+CCS pathway this way has not been confirmed.
+
+**45Q:** $85/tCO2 for geologic storage with prevailing wage (non-DAC), construction start before 2033, 12,500 t/yr minimum capture for industrial facilities. **45V** (BECCS-H2 election, unchanged): construction start before 2028, up to $3.00/kg, barred where 45Q is claimed (45V(d)(2)).
 
 ### Carbon Fate in FT-SAF Production
 
@@ -80,93 +84,45 @@ Based on Liu et al. (Table 4) and the BiCRS pathway comparison spreadsheet:
 | Process losses | ~14% | 0.26 |
 | **Total** | **100%** | **1.83** |
 
-The CO2 in the fuel is released upon combustion but offset by the displacement credit (avoiding 0.547 tCO2 of fossil jet emissions per dry ton).
+Note: at 0.17 kg fuel per kg biomass, roughly 29–32% of the biomass *carbon* ends up in the fuel (fuel is ~85% carbon, biomass ~50%). The mass yield (17%) and the carbon fraction (~30%) are different quantities. The ~54% captured share is consistent with the Energy Transitions Commission's (2021) statement that gasification routes "allow the capture of up to 55% of total biomass carbon," and with Jiang & Bhattacharyya (2016, coal-biomass case, 56.9% captured); we could not verify it directly against a biomass-only FT table.
 
 ### SAF Pathway Parameters
 
-All ranges represent (P10, P50, P90) — the 10th, 50th, and 90th percentile estimates.
+All ranges are (P10, P50, P90).
 
-#### Fischer-Tropsch (FT-SAF) — Agricultural/Forest Waste
+**Jet fuel price (all SAF pathways): $2.10 / $2.75 / $4.00 per gallon** (was $2.50 / $3.00 / $3.50). US Gulf Coast kerosene-type jet spot (FRED `DJFUELUSGULF`, computed from daily data): 2022 $3.37, 2023 $2.70, 2024 $2.34, 2025 $2.11, 2026 January–September $3.36 (September 2026 ~$4.38, reflecting the Strait of Hormuz disruption). The P50 is the 2022–2026 mean ($2.78, rounded); P10 matches the 2025 average and P90 the 2026 crisis level.
 
-| Parameter | P10 | P50 | P90 | Notes |
-|-----------|-----|-----|-----|-------|
-| Mass yield (kg SAF / kg dry feedstock) | 0.13 | 0.17 | 0.21 | Dimitriou 2018, Wang 2022 |
-| MFSP ($/gal) | 4.00 | 7.00 | 9.00 | Mid reflects current pre-commercial; P10 = at-scale |
-| Jet fuel price ($/gal) | 2.50 | 3.00 | 3.50 | Wholesale Jet-A |
-| 45Z credit ($/gal), CI-scaled | 0.33 | 0.44 | 0.57 | Derived from lifecycle reduction; $1.00/gal max (see 45Z note) |
-| Lifecycle GHG reduction | 60% | 70% | 85% | CORSIA defaults, GREET |
+| Pathway | Mass yield (kg/kg) | MFSP ($/gal) | Lifecycle GHG reduction | Notes |
+|---|---|---|---|---|
+| FT-SAF, ag/forest residues | 0.13 / 0.17 / 0.21 | 4.00 / 7.00 / **10.00** | **0.78 / 0.90 / 0.94** | CORSIA defaults: ag residues 7.7 g/MJ (91.3%), forestry residues 8.3 (90.7%) |
+| FT-SAF + CCS | same as FT | FT MFSP + CCS adder | same as FT | CCS **$40 / $70 / $120** per tCO2 stored (was $100 / $150 / $250) |
+| FT-SAF, switchgrass | 0.13 / 0.17 / 0.21 | 4.50 / 7.50 / **10.50** | **0.70 / 0.80 / 0.90** | CORSIA switchgrass 17.0 g/MJ incl. global ILUC (80.9%); US ILUC is lower |
+| HEFA, waste fats/oils | 0.40 / 0.50 / 0.60 | **4.00 / 5.25 / 7.00** | **0.65 / 0.78 / 0.85** | CORSIA UCO 13.9 g/MJ (84.4%), beef tallow 29.7 (66.6%) |
+| AtJ-SAF, ag/forest residues | 0.08 / 0.12 / 0.16 | 5.00 / 9.00 / 12.00 | **0.55 / 0.65 / 0.73** | CORSIA ethanol-AtJ residues 24.6–39.7 g/MJ (55–72%); isobutanol 67–73% |
 
-**Derived (mid values):**
-- Gallons per dry ton: 56.1
-- tCO2 avoided per dry ton: 0.547
-- Gross $/tCO2: $718
-- Net $/tCO2 (after fuel revenue): $410
-- Net + subsidy $/tCO2: $365
+Bold = changed in September 2026. Previous lifecycle ranges were 60/70/85% (FT, HEFA), 55/65/80% (switchgrass) and 50/65/80% (AtJ); the FT ranges sat entirely below the CORSIA default values (ICAO, *CORSIA Default Life Cycle Emissions Values*, 8th ed., Nov 2025). The new FT P10 (78%) allows for plants doing worse than the default in practice (fossil process energy, long feedstock hauls).
 
-#### Fischer-Tropsch + CCS (FT-SAF + CCS) — Agricultural/Forest Waste
+**MFSP rationale.**
+- *FT:* nth-plant TEAs cluster around $3–6/gal. First-of-a-kind estimates run higher: EASA's 2025 production-cost estimate for "advanced aviation biofuels" is €2,760/t (range €1,790–3,130), roughly $9/gal, and Langholtz et al. (2026) cite current SAF costs of $9.40–10.96/gal. Real FOAK plants have failed (Fulcrum's Sierra plant shut in May 2024; Red Rock never produced fuel). P90 was raised to $10.
+- *HEFA:* 2025 aviation-biofuel (HEFA) market price in the EU was €1,925/t versus €640/t for conventional jet (EASA 2025 reference prices, real index pricing), about $6.5–7/gal, which includes margin. Used-cooking-oil prices of roughly $1,000–1,300/t (market reports, unverified) put feedstock alone near $4/gal. The previous $4.50 P50 gave HEFA a net+subsidy cost ($109/t) well below the literature: El-Houjeiri et al. (2026) find a HEFA abatement-cost median of $362/t (range $112–526) across harmonized studies.
+- *AtJ:* unchanged; LanzaJet's Freedom Pines ethanol-to-jet plant now operates, but on non-cellulosic ethanol, and cellulosic ethanol has not reached commercial scale.
 
-| Parameter | P10 | P50 | P90 | Notes |
-|-----------|-----|-----|-----|-------|
-| Mass yield (kg SAF / kg dry feedstock) | 0.13 | 0.17 | 0.21 | Same as FT |
-| MFSP ($/gal) | 8.75 | 9.65 | 11.40 | Base FT + CCS at $100-250/tCO2 (mid $150) |
-| CDR efficiency | 0.537 | 0.537 | 0.537 | Liu et al. Table 4; fraction of biomass C stored |
-| CCS cost basis | $100/tCO2 | $150/tCO2 | $250/tCO2 | Full chain: capture + transport + storage |
-| 45Q credit on stored CO2 | $85/tCO2 | $85/tCO2 | $85/tCO2 | Eligible (gaseous capture from acid gas removal) |
-| Lifecycle GHG reduction | 60% | 70% | 85% | CORSIA defaults, GREET |
+**CCS cost rationale.** Gasification already strips CO2 in the acid-gas-removal unit as a near-pure stream, so the incremental cost is dehydration, compression, transport and storage. Published costs for high-purity streams: capture and compression ~$17.5/t average for >95% CO2 streams (NETL, 2018$; secondary extraction), $22–25/t for fermentation CCS (IEAGHG 2021-01); saline storage mostly ≤$8/t (NETL 2024); pipeline transport ~$15–25/t for dedicated 100 km lines (NETL). A standalone FT plant capturing ~0.5 Mt/yr would likely need its own pipeline and well, so the P50 ($70) and P90 ($120) sit above the ethanol-network analogs. The old $150/t is kept as a sensitivity case: it raises FT-SAF+CCS from $147 to $198/tCO2.
 
-**CCS cost derivation:** Gasification produces a concentrated CO2 stream (~95% pure) from the acid gas removal unit. Capture is essentially free (already part of the process); the cost is compression + transport + storage = $100-250/tCO2 for the full chain. At 0.984 tCO2 stored per dry ton, this adds $1.76-4.39/gal to MFSP.
+**Derived values (defaults, full lifecycle):**
+- FT-SAF: 56.1 gal/dry ton; 0.59 tCO2e avoided per dry ton; gross $667, net $405, net+subsidy $328/tCO2.
+- FT-SAF + CCS: MFSP $7.00 + $1.23 CCS = $8.23/gal; 0.59 avoided + 0.93 net stored = 1.52 tCO2e per dry ton; net+subsidy $147/tCO2 (45Q election); $165/tCO2 with the 45Z election.
+- HEFA: 165 gal per ton of oil; 1.50 tCO2e avoided per ton of oil; net+subsidy $210/tCO2.
 
-**Derived (mid values):**
-- tCO2 avoided per dry ton: 0.547 (fuel displacement)
-- tCO2 removed per dry ton: 0.984 (CCS storage)
-- **Total tCO2 abated per dry ton: 1.531**
-- Gross $/tCO2: $353
-- Net $/tCO2 (after fuel revenue): $243
-- Net + subsidy $/tCO2 (45Z + 45Q): $173
+HEFA uses waste fats/oils rather than cellulosic biomass and is not comparable per dry ton. Global collection of used cooking oil (~12 Mt/yr) and animal fats (~13 Mt/yr) is roughly 25 Mt/yr (IEA 2023), most of it already used for biofuels. Earlier versions said "~5–10 Mt/yr," which appears to have been a units mix-up (GlobalData's 2030 forecast is 5–10 *billion gallons*) or a regional subset. AtJ fermentation produces a very pure CO2 stream, but only ~15% of biomass carbon (ETC 2021); AtJ+CCS is not modeled separately.
 
-#### Fischer-Tropsch (FT-SAF) — Switchgrass
+### Non-CO2 sensitivity (new)
 
-| Parameter | P10 | P50 | P90 | Notes |
-|-----------|-----|-----|-----|-------|
-| Mass yield (kg SAF / kg dry feedstock) | 0.13 | 0.17 | 0.21 | Same as FT waste |
-| MFSP ($/gal) | 4.50 | 7.50 | 10.00 | Higher feedstock cost vs waste |
-| Lifecycle GHG reduction | 55% | 65% | 80% | CORSIA defaults |
-
-**Derived (mid values):**
-- Net $/tCO2: $462
-- Net + subsidy $/tCO2: $426
-
-#### HEFA — Waste Fats/Oils
-
-| Parameter | P10 | P50 | P90 | Notes |
-|-----------|-----|-----|-----|-------|
-| Mass yield (kg SAF / kg oil feedstock) | 0.40 | 0.50 | 0.60 | Per ton of waste oil, not cellulosic |
-| MFSP ($/gal) | 3.00 | 4.50 | 6.00 | Already commercial; UCO price-dependent |
-| Lifecycle GHG reduction | 60% | 70% | 85% | ICCT 2019, CORSIA |
-
-**Derived (mid values):**
-- Gallons per ton oil: 165.0
-- tCO2 avoided per ton oil: 1.608
-- Net $/tCO2: $154
-- Net + subsidy $/tCO2: $109
-
-**Note:** HEFA uses waste fats/oils (used cooking oil, animal fats), not cellulosic biomass. It is not directly comparable to cellulosic pathways on a per-dry-ton basis and is presented separately in figures. HEFA does not produce a concentrated CO2 stream and is not a natural candidate for CCS integration.
-
-#### Alcohol-to-Jet (AtJ-SAF) — Agricultural/Forest Waste
-
-| Parameter | P10 | P50 | P90 | Notes |
-|-----------|-----|-----|-----|-------|
-| Mass yield (kg SAF / kg dry feedstock) | 0.08 | 0.12 | 0.16 | Lower yield than FT |
-| MFSP ($/gal) | 5.00 | 9.00 | 12.00 | Mid reflects current pre-commercial |
-| Lifecycle GHG reduction | 50% | 65% | 80% | CORSIA defaults, Tanzil 2021 |
-
-**Derived (mid values):**
-- Gallons per dry ton: 39.6
-- tCO2 avoided per dry ton: 0.386
-- Net $/tCO2: $615
-- Net + subsidy $/tCO2: $580
-
-**Note:** AtJ fermentation produces a very pure CO2 stream (~99%) as a byproduct, making it another natural CCS candidate (similar to ADM's ethanol+CCS project). Not modeled separately here but would have similar CCS economics to FT+CCS.
+The *SAF non-CO2 credit* slider (default 0) adds a benefit equal to a chosen percentage of the CO2 displacement benefit. Calibration for 100% SAF:
+- Contrail radiative forcing falls 26% (Märkl et al. 2024, ECLIF3, 100% HEFA, "conservatively") to 44% (Teoh et al. 2022, fleet-wide 100% SAF model).
+- Lee et al. (2021, Table 5) give contrail-cirrus CO2-equivalent emissions of 0.63× aviation CO2 under GWP100, 1.77× under GWP*, and 2.32× under GWP20.
+- The implied non-CO2 benefit is therefore ~16–28% of the CO2 benefit (GWP100) or ~46–78% (GWP*). We use 20% and 60% as sensitivity cases. The earlier statement that crediting contrails "could roughly double SAF's benefit" is only reached under GWP20 or with optimistic contrail assumptions and has been removed.
+- Caveats: contrail forcing uncertainty is very large (non-CO2 terms contribute ~8× more than CO2 to uncertainty in aviation ERF; Lee et al. 2021); benefits depend on blend level, routes and time of day; flight rerouting may avoid many warming contrails more cheaply than SAF; no accounting framework currently credits these benefits.
 
 ---
 
@@ -191,9 +147,9 @@ CDR pathways that produce useful co-products (electricity, heat, hydrogen) gener
 
 | CDR Pathway | Co-product | Avoided emissions (tCO2/dry ton) | Displaced source |
 |-------------|-----------|----------------------------------|-----------------|
-| BECCS (electricity) | 0.92 MWh/tCO2 | 0.33 | NGCC at 0.36 tCO2/MWh |
+| BECCS (electricity) | 0.92 MWh per dry ton | 0.33 | NGCC at 0.36 tCO2/MWh |
 | BECCS (heat) | 0.7 MWh_th/tCO2 | 0.25 | Gas boiler |
-| BECCS (hydrogen) | 52 kg H2/tCO2 | 0.55 | Gray H2 at 12 tCO2/tH2 |
+| BECCS (hydrogen) | ~50 kg H2 per dry ton | 0.55 | Gray H2 at 12 tCO2/tH2 |
 | WtE + CCS | Electricity + heat | 0.30 | Fossil grid mix |
 
 These avoided emissions are not included in the $/tCO2 cost metric (which is per tCO2 *removed* only) but are relevant for total climate benefit accounting per dry ton of feedstock.
@@ -358,18 +314,20 @@ The analysis identifies which SAF and CDR pathways compete for the **same** feed
 
 ### Parameter Distributions
 
-All (P10, P50, P90) values are used to fit **PERT distributions** for Monte Carlo simulation. PERT distributions weight the mode more heavily than triangular distributions, better representing cost distributions where extreme values are possible but unlikely.
+Each (P10, P50, P90) triple defines a **two-piece (split) normal distribution** whose 10th, 50th and 90th percentiles match the stated values exactly, with separate spreads below and above the median, clamped to physical bounds (costs ≥ 0, fractions in [0, 0.99]).
+
+*Bug fixed September 2026:* earlier versions (and the original Python analysis) passed the triple to a PERT distribution as its minimum, mode and maximum. The resulting output "P10–P90" ranges were only ~45% as wide as the stated input ranges (for example, a $200 / $300 / $400 cost input produced a $256–345 P10–P90 band). Central estimates are unaffected; uncertainty ranges are now correspondingly wider.
 
 ### Monte Carlo Simulation
 
-- **10,000 draws** per pathway
-- Parameters drawn from PERT distributions fitted to (P10, P50, P90)
+- **4,000 draws** per pathway in the explorer (seeded, so ranges are stable while adjusting inputs)
+- Parameters drawn from split-normal distributions fitted to (P10, P50, P90); FT-SAF + CCS samples the FT base MFSP and the CCS cost independently
 - The **45Z credit is stochastic**, computed per draw from that draw's sampled lifecycle GHG reduction (higher reduction → lower CI → larger credit), so it is perfectly correlated with the fuel's carbon intensity.
 - Figure 1 P10–P90 error bars are taken directly as percentiles of the Monte Carlo output distribution (rather than deterministic percentile-input estimates), so they propagate the full stochastic model including the CI-scaled credit.
 
 ### Tornado Sensitivity
 
-One-at-a-time (OAT) sensitivity analysis on the **net + subsidy $/tCO2** metric, varying each parameter from its P10 to P90 value while holding others at P50.
+One-at-a-time (OAT) sensitivity analysis on the **net + subsidy $/tCO2** metric, varying each parameter from its P10 to P90 value while holding others at P50 (static Python analysis, May 2026; not regenerated for the September 2026 parameters).
 
 **Note on mass yield:** For SAF pathways, mass yield does not affect $/tCO2 because MFSP is expressed per gallon — both cost and CO2 avoided scale identically with yield. Yield matters for tCO2 per dry ton (carbon flow) but cancels in the cost ratio.
 
@@ -381,18 +339,11 @@ Figure 7 shows the complete carbon budget per dry ton of feedstock, including:
 - **CO2 released to atmosphere** (gray) — biomass carbon not captured
 - **CO2 avoided** (blue, hatched, stacked above) — additional abatement from displacing fossil energy
 
-This figure demonstrates that high-efficiency CDR pathways with energy co-products (e.g. BECCS-H2: 1.19 stored + 0.55 avoided = 1.74 total) achieve substantially greater total abatement per dry ton than SAF alone (0.55 avoided only).
+At September 2026 defaults, BECCS (electricity) delivers 1.90 tCO2e per dry ton (1.57 net stored + 0.33 avoided) against 0.59 for FT-SAF, a 3.2× ratio; FT-SAF + CCS delivers 1.52.
 
 ### LCA Lifecycle GHG Reduction Factors
 
-| SAF Pathway | Lifecycle GHG Reduction (P10/P50/P90) | Source |
-|-------------|---------------------------------------|--------|
-| FT (waste) | 60% / 70% / 85% | CORSIA, GREET |
-| FT (switchgrass) | 55% / 65% / 80% | CORSIA |
-| HEFA (waste fats) | 60% / 70% / 85% | ICCT 2019, CORSIA |
-| AtJ (waste) | 50% / 65% / 80% | CORSIA, Tanzil 2021 |
-
-These reduce the effective tCO2 avoided, increasing SAF's $/tCO2 by 15-50% depending on pathway.
+See the SAF pathway table above (CORSIA 8th edition defaults, November 2025). In full-lifecycle mode these multiply the 11.66 kg CO2e/gal well-to-wake baseline.
 
 ---
 
@@ -400,7 +351,7 @@ These reduce the effective tCO2 avoided, increasing SAF's $/tCO2 by 15-50% depen
 
 1. **Avoided ≠ Removed.** SAF prevents fossil CO2 emissions (avoidance); CDR physically removes atmospheric CO2 (removal). If aviation decarbonizes via other means (electric, hydrogen flight), SAF's displacement value goes to zero while CDR removal is permanent.
 
-2. **Non-CO2 aviation effects not modeled.** Aviation's total climate forcing is ~2-4x its CO2 impact alone (contrails, NOx, water vapor at altitude). SAF from FT/HEFA can reduce contrails by 50-70% via lower aromatic content (Voigt et al. 2021). This is the strongest unmodeled argument in SAF's favor — if credited, it could roughly double SAF's effective climate benefit. However, the effect is highly route/weather-dependent and not yet included in any carbon accounting framework.
+2. **Non-CO2 aviation effects are a sensitivity, not a default.** Non-CO2 terms were 66% of aviation's net ERF in 2018 (Lee et al. 2021), and aviation warms at ~3× the rate of its CO2 alone under GWP*. 100% SAF cuts ice-crystal numbers by ~56% and contrail forcing by ~26–44% (Märkl et al. 2024; Teoh et al. 2022), worth roughly +16–28% (GWP100) to +46–78% (GWP*) of SAF's CO2 benefit. See the non-CO2 sensitivity section. The effect is route-, weather- and blend-dependent and is not yet credited in any accounting framework.
 
 3. **Permanence varies across CDR pathways.** BECCS with geologic storage is effectively permanent (10,000+ years). Biochar is 100-1,000 years. Biomass burial durability is unproven at scale.
 
@@ -408,48 +359,71 @@ These reduce the effective tCO2 avoided, increasing SAF's $/tCO2 by 15-50% depen
 
 5. **SAF distribution costs not included** — transport from production facility to airport not in MFSP.
 
-6. **Subsidies reflect current US policy** (45Q at $85/tCO2; 45Z Clean Fuel Production Credit for SAF — up to $1.00/gal, CI-scaled, ~$0.34–0.44/gal at mid lifecycle reductions — post-OBBBA and effective through 2029). Policy is subject to change. EU subsidies not modeled.
+6. **Subsidies reflect current US policy** (45Q at $85/tCO2; 45Z up to $1.00/gal, CI-scaled, ~$0.34–0.81/gal at default lifecycle reductions, through 2029; no 45Z at facilities claiming 45Q). Policy is subject to change. EU and UK SAF mandates (ReFuelEU: 2% in 2025, 6% in 2030; UK: 2% in 2025, 10% in 2030) create compliance demand independent of $/tCO2 and are not modeled; ReFuelEU penalties are at least twice the SAF–fossil price gap.
 
 7. **Feedstock competition effects not modeled.** If demand for waste biomass increases, prices would rise for all pathways.
 
-8. **HEFA feedstock supply is limited.** Waste fats/oils are a constrained resource (~5-10 Mt/year globally). HEFA cannot scale to meet aviation fuel demand alone.
+8. **HEFA feedstock supply is limited.** Global collection of used cooking oil and animal fats is roughly 25 Mt/yr (IEA 2023), most of it already used for biofuels, with documented fraud risk in imported UCO. ETC (2021) puts waste lipids' ceiling at ~5% of global jet fuel.
 
 9. **Cost estimates reflect current/near-term pricing.** SAF mid-values represent pre-commercial current costs; P10 values represent at-scale commercial targets. CDR mid-values are calibrated to actual Frontier offtake pricing (CO280 ~$285, Celsio ~$300, burial projects ~$150).
 
-10. **No operational FT-SAF+CCS plants exist.** Velocys Bayou Fuels is the most advanced integrated project (completed FEED) but remains in development. Fulcrum BioEnergy went bankrupt in 2024. SAF+CCS cost estimates are based on TEA literature and CCS cost estimates applied to the FT gasification process.
+10. **No operational FT-SAF or FT-SAF+CCS plants exist.** Fulcrum's Sierra plant shut down in May 2024 and the company filed for Chapter 11 that September; Red Rock Biofuels never produced fuel. Velocys Bayou Fuels and DG Fuels (Louisiana, in FEED as of 2026) remain in development. SAF+CCS cost estimates combine FT TEA literature with CCS costs for high-purity CO2 streams.
 
 ---
 
-## Summary Results (Mid Estimates)
+## Summary Results (Central Estimates, September 2026 defaults)
 
-| Pathway | Type | Gross $/tCO2 | Net $/tCO2 | Net+Sub $/tCO2 | tCO2/dry ton |
-|---------|------|-------------|-----------|----------------|--------------|
-| FT-SAF (ag/forest waste) | SAF | $718 | $410 | $365 | 0.547 |
-| **FT-SAF + CCS** | **SAF+CDR** | **$353** | **$243** | **$173** | **1.531** |
-| FT-SAF (switchgrass) | SAF | $769 | $462 | $426 | 0.547 |
-| HEFA (waste fats/oils) | SAF | $462 | $154 | $109 | 1.608 |
-| AtJ-SAF (ag/forest waste) | SAF | $923 | $615 | $580 | 0.386 |
-| BECCS (electricity) | CDR | $300 | $275 | $190 | 1.650 |
-| BECCS (heat) | CDR | $285 | $260 | $175 | 1.650 |
-| BECCS (hydrogen) | CDR | $300 | $170 | $85 | 1.192 |
-| WtE + CCS | CDR | $300 | $260 | $175 | 1.467 |
-| Bio-oil seq. (cellulosic) | CDR | $350 | $350 | $350 | 1.19 |
-| Bio-oil seq. (HTL, lipid) | CDR | $325 | $325 | $325 | 1.19 |
-| Biomass injection | CDR | $200 | $200 | $200 | 1.687 |
-| Biochar | CDR | $200 | $180 | $180 | 0.550 |
-| Biomass burial | CDR | $150 | $150 | $150 | 1.742 |
+Generated from the explorer defaults. P10–P90 are Monte Carlo percentiles of the net + subsidy cost. "tCO2 benefit/dry ton" is per ton of oil for the lipid pathways and per ton of MSW or wet waste for those pathways.
 
-### Key Ratios
+**Full lifecycle accounting (default):**
 
-- **BECCS (elec/heat) / SAF carbon ratio:** 3.02x (BECCS removes ~3x more CO2 per dry ton than SAF avoids)
-- **Breakeven CDR efficiency:** 29.8% (CDR must achieve at least this efficiency to match SAF's carbon benefit per dry ton)
-- **FT-SAF+CCS total abatement:** 1.531 tCO2/dry ton — comparable to CDR pathways
-- **Cheapest cellulosic SAF (net+sub):** FT-SAF+CCS at $173/tCO2
-- **Cheapest cellulosic CDR (net+sub):** BECCS-H2 at $85/tCO2, Biomass burial at $150/tCO2
+| Pathway | Type | Gross $/tCO₂ | Net $/tCO₂ | Net+Sub $/tCO₂ | P10–P90 (net+sub) | tCO₂ benefit/dry ton |
+|---|---|---|---|---|---|---|
+| FT-SAF (ag/forest waste) | SAF | $667 | $405 | $328 | $12 – $640 | 0.59 |
+| FT-SAF + CCS | SAF+CDR | $303 | $202 | $147 | $29 – $269 | 1.52 |
+| FT-SAF (switchgrass) | SAF | $804 | $509 | $442 | $94 – $777 | 0.52 |
+| HEFA (waste fats/oils) | SAF | $577 | $275 | $210 | $17 – $436 | 1.50 |
+| AtJ-SAF (ag/forest waste) | SAF | $1188 | $825 | $780 | $231 – $1238 | 0.30 |
+| BECCS (electricity) | CDR | $300 | $275 | $190 | $91 – $289 | 1.90 |
+| BECCS (heat) | CDR | $285 | $260 | $175 | $89 – $287 | 1.82 |
+| BECCS (hydrogen) | CDR | $300 | $170 | $85 | −$27 – $197 | 1.68 |
+| WtE + CCS | CDR | $300 | $260 | $175 | $69 – $273 | 1.69 |
+| Bio-oil seq. (cellulosic) | CDR | $350 | $350 | $350 | $251 – $500 | 1.13 |
+| Bio-oil seq. (HTL, lipid) | CDR | $325 | $325 | $325 | $228 – $478 | 1.13 |
+| Biomass injection | CDR | $200 | $200 | $200 | $123 – $283 | 1.60 |
+| Biochar | CDR | $200 | $180 | $180 | $73 – $330 | 0.52 |
+| Biomass burial | CDR | $150 | $150 | $150 | $92 – $199 | 1.65 |
+
+**Simple displacement accounting:**
+
+| Pathway | Type | Gross $/tCO₂ | Net $/tCO₂ | Net+Sub $/tCO₂ | P10–P90 (net+sub) | tCO₂ benefit/dry ton |
+|---|---|---|---|---|---|---|
+| FT-SAF (ag/forest waste) | SAF | $718 | $436 | $353 | $13 – $662 | 0.55 |
+| FT-SAF + CCS | SAF+CDR | $301 | $201 | $146 | $28 – $266 | 1.53 |
+| FT-SAF (switchgrass) | SAF | $769 | $487 | $423 | $92 – $723 | 0.55 |
+| HEFA (waste fats/oils) | SAF | $538 | $256 | $196 | $16 – $386 | 1.61 |
+| AtJ-SAF (ag/forest waste) | SAF | $923 | $641 | $606 | $182 – $911 | 0.39 |
+| BECCS (electricity) | CDR | $300 | $275 | $190 | $91 – $289 | 1.65 |
+| BECCS (heat) | CDR | $285 | $260 | $175 | $89 – $287 | 1.65 |
+| BECCS (hydrogen) | CDR | $300 | $170 | $85 | −$27 – $197 | 1.19 |
+| WtE + CCS | CDR | $300 | $260 | $175 | $69 – $273 | 1.47 |
+| Bio-oil seq. (cellulosic) | CDR | $350 | $350 | $350 | $251 – $500 | 1.19 |
+| Bio-oil seq. (HTL, lipid) | CDR | $325 | $325 | $325 | $228 – $478 | 1.19 |
+| Biomass injection | CDR | $200 | $200 | $200 | $123 – $283 | 1.69 |
+| Biochar | CDR | $200 | $180 | $180 | $73 – $330 | 0.55 |
+| Biomass burial | CDR | $150 | $150 | $150 | $92 – $199 | 1.74 |
+
+### Key Ratios and break-evens (full lifecycle, net + subsidies)
+
+- **BECCS (electricity) / FT-SAF benefit per dry ton:** 3.2× (1.90 vs 0.59 tCO2e)
+- **FT-SAF matches BECCS (electricity, $190/t)** at a jet price of ~$4.19/gal (MFSP $7.00), or an MFSP of ~$5.56/gal (jet $2.75), or a non-CO2 credit of ~72%
+- **FT-SAF at nth-plant MFSP ($4.00/gal):** ~$42/tCO2
+- **FT-SAF + CCS** ($147/t) is below BECCS (electricity) at defaults; it matches BECCS at an FT base MFSP of ~$8.18/gal, and rises to $198/t at a $150/t CCS cost
+- **Without 45Z** (post-2029 expiry): FT-SAF $405/t
 
 ### Key Finding
 
-FT-SAF+CCS is the only SAF pathway approaching cost-competitiveness with CDR on a $/tCO2 basis ($173 net+sub), benefiting from dual revenue streams (fuel sales + 45Q). However, it still sits above the cheapest CDR options and requires both functional SAF production (no commercial FT-SAF plants today) and CCS infrastructure — adding significant execution risk relative to proven CDR approaches. The narrower 45Z credit ($1.00/gal max, CI-scaled) under the post-OBBBA regime raises SAF's net+subsidy costs relative to the prior $1.25/gal blender's credit, widening the gap for SAF pathways without CCS.
+At current costs, cellulosic SAF without carbon capture costs roughly $330/tCO2 avoided, well above most biomass CDR ($150–350/t before subsidies), and delivers about a third of the climate benefit per ton of biomass. The comparison is highly sensitive to three uncertain inputs: whether FT plants reach nth-plant costs, the jet fuel price, and whether non-CO2 benefits are counted. FT-SAF + CCS, which both displaces fossil jet and stores ~54% of the biomass carbon, is cost-competitive with the benchmark BECCS pathway at central assumptions, but no such plant exists, and its advantage depends on the FT process itself becoming bankable.
 
 ---
 
@@ -468,7 +442,19 @@ FT-SAF+CCS is the only SAF pathway approaching cost-competitiveness with CDR on 
 - Frontier Climate (2024). Purchasing POV: BiCRS.
 - Frontier Climate (2024). BiCRS pathway comparison spreadsheet.
 - EIA (2024). Carbon Dioxide Emissions Coefficients.
-- CORSIA (2024). Default Life Cycle Emissions Values for CORSIA Eligible Fuels.
+- ICAO (2025). CORSIA Default Life Cycle Emissions Values for CORSIA Eligible Fuels, 8th edition (November 2025).
+- EASA (2026). 2025 Aviation Fuels Reference Prices for ReFuelEU Aviation (briefing note).
+- US EIA / FRED. U.S. Gulf Coast Kerosene-Type Jet Fuel Spot Price FOB (DJFUELUSGULF).
+- 26 U.S.C. §45Z, §45Q, §45V as amended by Pub. L. 119-21 (2025); Treasury proposed regulations REG-121244-23, 91 FR 5160 (2026).
+- IEAGHG (2021). Biorefineries with CCS. Technical Report 2021-01.
+- IEA (2023). Is the biofuel industry approaching a feedstock crunch?
+- Energy Transitions Commission (2021). Bioresources within a Net-Zero Emissions Economy.
+- UK Climate Change Committee (2018). Biomass in a Low-Carbon Economy.
+- Lee, D.S. et al. (2021). The contribution of global aviation to anthropogenic climate forcing for 2000 to 2018. *Atmospheric Environment* 244, 117834.
+- Teoh, R. et al. (2022). Targeted use of sustainable aviation fuel to maximize climate benefits. *Environmental Science & Technology* 56, 17246–17255.
+- Märkl, R. et al. (2024). Powering aircraft with 100% sustainable aviation fuel reduces ice crystals in contrails. *Atmospheric Chemistry and Physics* 24, 3813–3837.
+- El-Houjeiri, H., Brandt, A., Masnadi, M. (2026). Carbon compensation or fuel displacement? Biomass allocation trade-offs for decarbonizing aviation. *iScience*. doi:10.1016/j.isci.2026.116848
+- Langholtz, M. et al. (2026). Biomass carbon removal can help sustainable aviation fuels achieve on-time arrival. *iScience* 29, 115956. doi:10.1016/j.isci.2026.115956
 - Jiang, Y. & Bhattacharyya, D. (2016). Techno-economic analysis of a biomass-to-liquids plant with CCS.
 
 ---
@@ -483,13 +469,14 @@ Differences and extensions relative to the static analysis:
 1. **User-adjustable central estimates.** Sliders set each input's P50; the P10 and P90
    scale proportionally with the user's value (bounded parameters such as lifecycle
    reduction and capture efficiency are clamped at 0.95/0.98).
-2. **In-browser Monte Carlo.** Uncertainty ranges are P10-P90 from a 4,000-draw PERT
-   Monte Carlo per pathway (seeded, so ranges are stable while dragging sliders). The 45Z
-   credit is stochastic, computed from each draw's sampled lifecycle reduction.
+2. **In-browser Monte Carlo.** Uncertainty ranges are P10-P90 from a 4,000-draw Monte Carlo
+   per pathway using split-normal inputs matched to each P10/P50/P90 (seeded, so ranges are
+   stable while dragging sliders). The 45Z credit is stochastic, computed from each draw's
+   sampled lifecycle reduction.
 3. **FT-SAF+CCS cost is derived, not independent.** Its MFSP = FT-SAF (ag/forest) MFSP +
-   a CCS cost slider ($/tCO2 stored, default $150, per the $100-250/tCO2 full-chain range)
-   applied to the ~0.018 tCO2 stored per gallon. Moving the base FT-SAF cost moves
-   FT-SAF+CCS with it.
+   a CCS cost slider ($/tCO2 stored, default $70, P10–P90 $40–120) applied to the ~0.018
+   tCO2 stored per gallon. Moving the base FT-SAF cost moves FT-SAF+CCS with it. It carries
+   a 45Q-or-45Z election (§45Z(d)(4)).
 4. **BECCS-hydrogen 45Q/45V election.** The 45V clean hydrogen credit survived the OBBBA
    with a shortened window (construction start before January 1, 2028; up to $3.00/kg).
    Because 45V and 45Q cannot be claimed at the same facility (26 USC 45V(d)(2)), the tool
@@ -497,10 +484,38 @@ Differences and extensions relative to the static analysis:
    ton (~$126/tCO2 removed at 65% capture efficiency). The hydrogen co-product revenue
    (default $130/tCO2, implying ~$3.1/kg H2) is a market price assumption between gray
    (~$1-2/kg) and green (~$4.50+/kg) hydrogen, independent of either credit.
-5. **Benchmark tiles** compare the most common pathways today - FT-SAF (ag/forest waste)
-   and BECCS (electricity) - rather than the cheapest options.
+5. **Benchmark tiles** compare FT-SAF (ag/forest waste) and BECCS (electricity), two
+   established routes that use the same residues, rather than the cheapest options.
+6. **Non-CO2 slider** (default 0%) credits SAF with an extra benefit as a share of its CO2
+   displacement benefit.
 
 ---
 
 *Static analysis conducted May 2026 (code: `saf_vs_cdr_analysis.py`, not included in this
-repository). Interactive tool and tax-credit updates: July 2026.*
+repository). Interactive tool and tax-credit updates: July 2026. SAF recalibration and bug
+fixes: September 2026.*
+
+---
+
+## Changelog: September 2026
+
+**Bugs fixed**
+
+| Issue | Direction | Effect at defaults |
+|---|---|---|
+| Monte Carlo treated P10/P90 as PERT min/max | Ranges too narrow | Output P10–P90 bands were ~45% of stated input width; central values unchanged |
+| Lifecycle mode applied SAF % reduction to the 9.75 kg combustion-only figure instead of the 11.66 kg well-to-wake baseline | Against SAF | SAF lifecycle benefit understated 16% ($/t overstated ~19%) |
+| FT-SAF+CCS claimed 45Z and 45Q together, barred by §45Z(d)(4) | For SAF+CCS | Subsidy overstated ~$16/tCO2 |
+| Lifecycle mode: table and tiles used gross CDR storage while the carbon chart used net; FT-SAF+CCS storage was netted in the chart but not in costs | Inconsistent | ≤5% |
+| Negative-zero axis tick label ("$-0"); gap between stored and released segments in lifecycle carbon chart | Display | — |
+| Unsupported superlatives in benchmark tiles ("most common", "leading") | Copy | — |
+
+Validation: restoring the pre-September parameters in the updated code reproduces the previous central values exactly (FT-SAF $365, HEFA $109, AtJ $580, FT switchgrass $426/tCO2, simple accounting); FT-SAF+CCS gives $188 versus $172 previously, the difference being the removed 45Z stack.
+
+**Parameter changes (SAF only):** jet price $2.50/$3.00/$3.50 → $2.10/$2.75/$4.00; lifecycle reductions to CORSIA 8th-edition defaults (FT 90%, switchgrass 80%, HEFA 78%, AtJ 65% central); HEFA MFSP $3.00/$4.50/$6.00 → $4.00/$5.25/$7.00; FT MFSP P90 $9 → $10 (switchgrass $10 → $10.50); CCS cost for FT-SAF+CCS $100/$150/$250 → $40/$70/$120; default accounting simple → full lifecycle. Waste-lipid supply and non-CO2 statements corrected (see caveats).
+
+**Effect on central net + subsidy costs ($/tCO2):** FT-SAF $365 → $328; FT-SAF+CCS $172 → $147; HEFA $109 → $210; AtJ $580 → $780; FT switchgrass $426 → $442 (old values simple accounting, new values full lifecycle). Sequential attribution for FT-SAF: lifecycle default (−$25 vs simple), jet price (+$26), CORSIA lifecycle values (−$38).
+
+**External check:** El-Houjeiri et al. (2026) harmonize 16 waste/residue SAF studies to 2024 USD; their abatement-cost medians (before subsidies) are FT $342, HEFA $362 and AtJ $938/tCO2. The explorer's net-of-revenue lifecycle values are FT $405, HEFA $275 and AtJ $825.
+
+**Open items:** BECCS-H2 documentation used 52 kg H2/tCO2 while the code uses 50 kg H2 per dry ton (≈42 kg/tCO2 at 65% capture), so the $130/tCO2 co-product default implies ~$3.1/kg rather than $2.50/kg; CDR values were not changed pending review. The 53.7% FT carbon-capture share was not verified against a biomass-only primary source.

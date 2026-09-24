@@ -118,12 +118,13 @@
     align-items: start;
   }
   @media (max-width: 900px) {
-    .layout { grid-template-columns: 1fr; }
+    .layout { grid-template-columns: minmax(0, 1fr); }
     aside.controls { position: static !important; max-height: none !important; }
   }
 
   /* ------- controls rail ------- */
   aside.controls {
+    min-width: 0;
     position: sticky;
     top: 14px;
     max-height: calc(100vh - 28px);
@@ -506,8 +507,8 @@
     </div>
     <span class="seg-label">Accounting</span>
     <div class="seg" id="lcaSeg">
-      <button data-lca="0" aria-pressed="true">Simple displacement</button>
-      <button data-lca="1" aria-pressed="false">Full lifecycle</button>
+      <button data-lca="1" aria-pressed="true">Full lifecycle</button>
+      <button data-lca="0" aria-pressed="false">Simple displacement</button>
     </div>
     <label class="toggle"><input type="checkbox" id="whiskerToggle" checked> Uncertainty ranges</label>
     <button class="copylink" id="copyBtn" title="Copy a URL that restores these exact assumptions">Copy scenario link</button>
@@ -551,17 +552,23 @@
     <h3>Cost formulas</h3>
     <p><strong>SAF:</strong> <code>(MFSP × gallons − jet fuel revenue − 45Z credit − 45Q on stored CO₂) ÷ tCO₂ benefit</code>.
        MFSP (minimum fuel selling price) is feedstock-inclusive. Gallons per dry ton follow from mass yield
-       (kg fuel / kg feedstock ÷ 0.8 kg/L ÷ 3.79 L/gal); each gallon displaces 9.75 kg CO₂ of fossil jet (EIA).
+       (kg fuel / kg feedstock ÷ 0.8 kg/L ÷ 3.79 L/gal). Under full lifecycle accounting (default) each gallon avoids
+       its lifecycle GHG reduction × 11.7 kg CO₂e, the CORSIA well-to-wake fossil jet baseline (89 gCO₂e/MJ); under
+       simple displacement it avoids the 9.75 kg CO₂ of fossil jet combustion (EIA).
        FT-SAF&nbsp;+&nbsp;CCS is not priced independently: its MFSP is the FT-SAF (ag/forest) cost plus the CCS cost
        slider applied to the ~0.018 tCO₂ stored per gallon (54% of biomass carbon exits as a concentrated CO₂
-       stream during gasification, so capture is cheap; the cost is mostly transport and storage).</p>
+       stream during gasification, so capture is cheap; the cost is mostly compression, transport and storage,
+       default $70/t, P10–P90 $40–120).</p>
     <p><strong>CDR:</strong> <code>(total cost − co-product revenue − 45Q) ÷ tCO₂ removed</code>. Costs are feedstock-inclusive
        and calibrated to actual offtake pricing. A dry ton of biomass holds 1.83 tCO₂e; removal = 1.83 × capture efficiency.</p>
     <h3>Subsidies</h3>
     <p>The 45Q credit ($85/tCO₂ statutory) requires gaseous CO₂ capture — BECCS, WtE+CCS, and FT-SAF+CCS qualify; bio-oil,
        biochar, burial, and injection do not. The 45Z Clean Fuel Production Credit (post-OBBBA: up to $1.00/gal with
-       prevailing-wage compliance, through 2029) is scaled by carbon intensity, <code>(50 − CI)/50</code> — at typical SAF
-       lifecycle reductions it is worth ~$0.35–0.45/gal, and it varies with each Monte Carlo draw.</p>
+       prevailing-wage compliance, through 2029; feedstock must come from the US, Canada or Mexico) is scaled by carbon
+       intensity, <code>(50 − CI)/50</code>, with CI floored at zero. At the default lifecycle reductions it is worth
+       ~$0.81/gal for FT-SAF, ~$0.59/gal for HEFA and ~$0.34/gal for AtJ, and it varies with each Monte Carlo draw.
+       A facility claiming 45Q is not a qualified 45Z facility (§45Z(d)(4)), so FT-SAF&nbsp;+&nbsp;CCS carries an
+       election: 45Q on stored CO₂ (default, worth more) or 45Z alone with CCS counted in the fuel's CI.</p>
     <p>The 45V clean hydrogen production credit survived OBBBA but was shortened: facilities must begin construction
        before January 1, 2028 (previously 2033) to claim up to $3.00/kg for ten years. 45V and 45Q cannot be claimed
        at the same facility (§45V(d)(2)), so the BECCS (hydrogen) pathway carries an election toggle — 45Q on stored
@@ -576,13 +583,17 @@
        fossil emissions they displace.</p>
     <h3>Caveats</h3>
     <p>Avoided ≠ removed: SAF benefits are counterfactual and shrink if aviation decarbonizes another way; CDR removals are
-       permanent. Non-CO₂ aviation effects (contrails) are not modeled — crediting them could roughly double SAF's benefit.
-       No commercial FT-SAF+CCS plant exists; those costs are techno-economic estimates. HEFA uses waste fats and oils, which
-       mostly do not compete with cellulosic CDR for the same feedstock and are supply-limited (~5–10 Mt/yr globally).</p>
-    <p class="muted" style="color:var(--ink-3)">Model logic mirrors <code>saf_vs_cdr_analysis.py</code> (PERT-distributed
+       permanent. Non-CO₂ effects are off by default; the <em>SAF non-CO₂ credit</em> slider adds them as a sensitivity.
+       For 100% SAF, contrail forcing falls ~26–44% (Märkl et al. 2024; Teoh et al. 2022); with Lee et al. (2021)
+       contrail CO₂-equivalence ratios that is worth roughly +16–28% of SAF's CO₂ benefit under GWP100 and +46–78%
+       under GWP*. No commercial FT-SAF+CCS plant exists; those costs are techno-economic estimates. HEFA uses waste fats
+       and oils, which mostly do not compete with cellulosic CDR for the same feedstock; global collection of used cooking
+       oil and animal fats is roughly 25 Mt/yr (IEA 2023) and already largely committed to biofuels.</p>
+    <p class="muted" style="color:var(--ink-3)">Model logic extends <code>saf_vs_cdr_analysis.py</code> (split-normal inputs fitted to P10/P50/P90,
        inputs, 4,000-draw Monte Carlo per pathway). Sources: Liu et al. 2011; Dimitriou et al. 2018; NREL/TP-5100-66291;
-       Tanzil et al. 2021; Fuss et al. 2018; NASEM 2019; ICAO CORSIA 2024; DOE SAF Grand Challenge 2022; EIA 2024;
-       Frontier BiCRS purchasing analyses.</p>
+       Tanzil et al. 2021; Fuss et al. 2018; NASEM 2019; ICAO CORSIA default values (8th ed., Nov 2025); EASA 2025
+       aviation fuel reference prices; EIA/FRED Gulf Coast jet prices; IEAGHG 2021; Lee et al. 2021; Teoh et al. 2022;
+       Märkl et al. 2024; El-Houjeiri et al. 2026; Frontier BiCRS purchasing analyses.</p>
   </section>
 </main>
 </div>
@@ -596,12 +607,18 @@
 // ============================================================================
 const C = {
   CO2E_PER_DRY_TON: 0.5 * 3.667,
-  CO2_PER_GAL_FOSSIL_JET: 9.75,
+  CO2_PER_GAL_FOSSIL_JET: 9.75,          // combustion only (EIA)
   JET_FUEL_DENSITY: 0.8,
   LITERS_PER_GALLON: 3.79,
+  JET_LHV_MJ_PER_KG: 43.2,
   CFPC_45Z_BASELINE_CI: 50.0,
-  FOSSIL_JET_CI: 89.0 * 1055.06 / 1000.0,
+  FOSSIL_JET_CI_G_PER_MJ: 89.0,          // CORSIA well-to-wake baseline
+  FOSSIL_JET_CI: 89.0 * 1055.06 / 1000.0, // kg CO2e / mmBTU
+  NET_NEG: 0.95,
 };
+// Well-to-wake fossil jet emissions per gallon (~11.7 kg CO2e). Lifecycle
+// reductions are defined against this baseline, not the 9.75 kg combustion figure.
+C.FOSSIL_JET_LCA_KG_PER_GAL = C.JET_FUEL_DENSITY * C.LITERS_PER_GALLON * C.JET_LHV_MJ_PER_KG * C.FOSSIL_JET_CI_G_PER_MJ / 1000.0;
 
 function saf45zCredit(ghgReduction, maxPerGal) {
   const ci = (1.0 - ghgReduction) * C.FOSSIL_JET_CI;
@@ -611,20 +628,26 @@ function saf45zCredit(ghgReduction, maxPerGal) {
 function gallonsPerDryTon(massYield) {
   return massYield * 1000.0 / (C.JET_FUEL_DENSITY * C.LITERS_PER_GALLON);
 }
-function safCosts(massYield, mfsp, jetPrice, credit, lcaFactor, cdrEff, subsidy45q) {
-  const gal = gallonsPerDryTon(massYield);
-  const co2Avoided = gal * C.CO2_PER_GAL_FOSSIL_JET * lcaFactor / 1000.0;
-  const co2Removed = C.CO2E_PER_DRY_TON * cdrEff;
-  const co2Total = co2Avoided + co2Removed;
-  const grossCost = mfsp * gal;
-  const fuelRevenue = jetPrice * gal;
-  const safSubsidy = credit * gal;
-  const ccsSubsidy = cdrEff > 0 ? co2Removed * subsidy45q : 0.0;
+// o: { massYield, mfsp, jetPrice, credit, useLca, lcaRed, cdrEff, q45, nonCo2 }
+function safCosts(o) {
+  const gal = gallonsPerDryTon(o.massYield);
+  const co2Avoided = o.useLca
+    ? gal * C.FOSSIL_JET_LCA_KG_PER_GAL * o.lcaRed / 1000.0
+    : gal * C.CO2_PER_GAL_FOSSIL_JET / 1000.0;
+  const grossStored = C.CO2E_PER_DRY_TON * o.cdrEff;
+  const co2Removed = grossStored * (o.useLca ? C.NET_NEG : 1);
+  // optional non-CO2 (contrail) benefit, expressed as a fraction of the CO2 displacement benefit
+  const nonCo2 = co2Avoided * (o.nonCo2 || 0);
+  const co2Total = co2Avoided + co2Removed + nonCo2;
+  const grossCost = o.mfsp * gal;
+  const fuelRevenue = o.jetPrice * gal;
+  const safSubsidy = o.credit * gal;
+  const ccsSubsidy = o.cdrEff > 0 ? grossStored * o.q45 : 0.0; // 45Q is paid on metered tonnes stored
   return {
     gross: grossCost / co2Total,
     net: (grossCost - fuelRevenue) / co2Total,
     netWithSubsidy: (grossCost - fuelRevenue - safSubsidy - ccsSubsidy) / co2Total,
-    co2Avoided, co2Removed, co2Total, gallons: gal,
+    co2Avoided, co2Removed, nonCo2, co2Total, gallons: gal,
     grossPerT: grossCost / co2Total,
     fuelRevPerT: fuelRevenue / co2Total,
     zCreditPerT: safSubsidy / co2Total,
@@ -641,20 +664,20 @@ function cdrCosts(totalCost, coproductRevenue, subsidy45q) {
 
 const SAF_PATHWAYS = [
   { id: 'ft',    name: 'FT-SAF (ag/forest waste)', short: 'FT-SAF (ag/forest)', feedstock: 'Ag residues, forest waste', cat: 'cellulosic',
-    massYield: [0.13, 0.17, 0.21], mfsp: [4.00, 7.00, 9.00], lca: [0.60, 0.70, 0.85], cdrEff: 0,
-    note: 'Fischer-Tropsch gasification; pre-commercial' },
+    massYield: [0.13, 0.17, 0.21], mfsp: [4.00, 7.00, 10.00], lca: [0.78, 0.90, 0.94], cdrEff: 0,
+    note: 'Fischer-Tropsch gasification; no commercial plant operating' },
   { id: 'ftccs', name: 'FT-SAF + CCS', short: 'FT-SAF + CCS', feedstock: 'Ag residues, forest waste', cat: 'cellulosic',
-    massYield: [0.13, 0.17, 0.21], mfsp: [8.75, 9.65, 11.40], lca: [0.60, 0.70, 0.85], cdrEff: 0.537,
+    massYield: [0.13, 0.17, 0.21], mfsp: null, lca: [0.78, 0.90, 0.94], cdrEff: 0.537,
     note: 'FT with CO₂ capture; stores 54% of biomass carbon' },
   { id: 'ftsw',  name: 'FT-SAF (switchgrass)', short: 'FT-SAF (switchgrass)', feedstock: 'Switchgrass (marginal land)', cat: 'cellulosic',
-    massYield: [0.13, 0.17, 0.21], mfsp: [4.50, 7.50, 10.00], lca: [0.55, 0.65, 0.80], cdrEff: 0,
+    massYield: [0.13, 0.17, 0.21], mfsp: [4.50, 7.50, 10.50], lca: [0.70, 0.80, 0.90], cdrEff: 0,
     note: 'Purpose-grown energy crop feedstock' },
   { id: 'hefa',  name: 'HEFA (waste fats/oils)', short: 'HEFA (waste fats)', feedstock: 'Waste fats/oils', cat: 'lipid',
-    massYield: [0.40, 0.50, 0.60], mfsp: [3.00, 4.50, 6.00], lca: [0.60, 0.70, 0.85], cdrEff: 0,
-    note: 'Only commercial SAF today; feedstock-limited' },
+    massYield: [0.40, 0.50, 0.60], mfsp: [4.00, 5.25, 7.00], lca: [0.65, 0.78, 0.85], cdrEff: 0,
+    note: 'Dominant commercial SAF route today; feedstock-limited' },
   { id: 'atj',   name: 'AtJ-SAF (ag/forest waste)', short: 'AtJ-SAF (ag/forest)', feedstock: 'Ag residues, forest waste', cat: 'cellulosic',
-    massYield: [0.08, 0.12, 0.16], mfsp: [5.00, 9.00, 12.00], lca: [0.50, 0.65, 0.80], cdrEff: 0,
-    note: 'Alcohol-to-jet; pre-commercial' },
+    massYield: [0.08, 0.12, 0.16], mfsp: [5.00, 9.00, 12.00], lca: [0.55, 0.65, 0.73], cdrEff: 0,
+    note: 'Alcohol-to-jet via cellulosic ethanol; not yet at commercial scale' },
 ];
 
 const CDR_PATHWAYS = [
@@ -678,7 +701,7 @@ const CDR_PATHWAYS = [
     eff: [0.85, 0.95, 0.98], cost: [90, 150, 200], coproduct: 'none', rev: [0, 0, 0], has45q: false, avoidedPerDt: 0 },
 ];
 
-// --- PERT sampling (seeded, stable across re-renders) ---
+// --- seeded random sampling (stable across re-renders) ---
 function mulberry32(seed) {
   let a = seed >>> 0;
   return function () {
@@ -699,42 +722,24 @@ function makeNormal(rand) {
     return u * m;
   };
 }
-function makeGamma(rand, normal) {
-  function gamma(alpha) {
-    if (alpha < 1) return gamma(alpha + 1) * Math.pow(rand(), 1 / alpha);
-    const d = alpha - 1 / 3, c2 = 1 / Math.sqrt(9 * d);
-    for (;;) {
-      let x, v;
-      do { x = normal(); v = 1 + c2 * x; } while (v <= 0);
-      v = v * v * v;
-      const u = rand();
-      if (u < 1 - 0.0331 * x * x * x * x) return d * v;
-      if (Math.log(u) < 0.5 * x * x + d * (1 - v + Math.log(v))) return d * v;
-    }
-  }
-  return gamma;
-}
-function pertParams(a, b, c) {
-  if ((a === b && b === c) || c === a) return null;
-  const mu = (a + 4 * b + c) / 6;
-  const denom = (b - mu) * (c - a);
-  if (Math.abs(denom) < 1e-12) return { a, c, alpha: 4.0, beta: 4.0 };
-  let alpha = ((mu - a) * (2 * b - a - c)) / denom;
-  if (alpha <= 0) alpha = 1.5;
-  let beta = Math.abs(mu - a) > 1e-12 ? alpha * (c - mu) / (mu - a) : 1.5;
-  if (beta <= 0) beta = 1.5;
-  return { a, c, alpha, beta };
-}
-function pertDraws(lo, mid, hi, n, rand, normal, gamma) {
-  const p = pertParams(lo, mid, hi);
+// Inputs are elicited as (P10, P50, P90). Sample a two-piece (split) normal
+// whose 10th, 50th and 90th percentiles match them exactly, clamped to
+// physical bounds. (Earlier versions fed the triple to a PERT as min/mode/max,
+// which made output P10-P90 ranges only ~45% as wide as the stated inputs.)
+const Z90 = 1.2815515655446004;
+function splitNormalDraws(lo, mid, hi, n, normal, bounds) {
   const out = new Float64Array(n);
-  if (!p) { out.fill(mid); return out; }
+  if (lo === mid && mid === hi) { out.fill(mid); return out; }
+  const sLo = (mid - lo) / Z90, sHi = (hi - mid) / Z90;
+  const [bLo, bHi] = bounds || [-Infinity, Infinity];
   for (let i = 0; i < n; i++) {
-    const g1 = gamma(p.alpha), g2 = gamma(p.beta);
-    out[i] = Math.min(p.c, Math.max(p.a, p.a + (g1 / (g1 + g2)) * (p.c - p.a)));
+    const z = normal();
+    out[i] = Math.min(bHi, Math.max(bLo, mid + z * (z < 0 ? sLo : sHi)));
   }
   return out;
 }
+const POS = [0, Infinity], FRAC = [0, 0.99];
+
 function percentile(arr, q) {
   const s = Float64Array.from(arr).sort();
   const idx = (q / 100) * (s.length - 1);
@@ -755,46 +760,65 @@ function scaledTriple(orig, newMid, clampHi) {
 }
 
 const N_DRAWS = 4000;
+const JET_T = [2.10, 2.75, 4.00]; // $/gal, P10/P50/P90 (US Gulf Coast; 2022-26 mean ~$2.78)
 const H2_KG_PER_DRY_TON = 50;   // Mote PFD: 0.05 t H2 per dry ton of biomass
 const V45_PER_KG_H2 = 3.00;     // 45V max ($/kg, CI < 0.45 kgCO2e/kg + prevailing wage)
 
 // FT-SAF+CCS production cost = FT-SAF base MFSP + CCS cost applied to the
 // tCO2 stored per gallon (0.537 of biomass carbon, spread over the fuel yield)
+const CCS_COST_T = [40, 70, 120]; // $/tCO2 full chain (compression, transport, storage) for a high-purity stream
+function storedPerGal(massYield, cdrEff) {
+  return C.CO2E_PER_DRY_TON * cdrEff / gallonsPerDryTon(massYield);
+}
 function ftccsMfsp(inputs) {
   const sp = SAF_PATHWAYS.find(p => p.id === 'ftccs');
-  const storedPerGal = C.CO2E_PER_DRY_TON * sp.cdrEff / gallonsPerDryTon(inputs.massYield.ftccs);
-  return {
-    base: inputs.mfsp.ft,
-    ccsAdder: inputs.ccsCost * storedPerGal,
-    total: inputs.mfsp.ft + inputs.ccsCost * storedPerGal,
-  };
+  const adder = inputs.ccsCost * storedPerGal(inputs.massYield.ftccs, sp.cdrEff);
+  return { base: inputs.mfsp.ft, ccsAdder: adder, total: inputs.mfsp.ft + adder };
+}
+// 45Z carbon intensity (kg CO2e/mmBTU). If CCS is counted toward the fuel's CI,
+// stored CO2 per MJ of fuel is subtracted; the (50 - CI)/50 factor is capped at 1
+// (OBBBA bars negative emissions rates for non-manure fuels).
+function safCredit(sp, lcaRed, massYield, inputs) {
+  if (sp.cdrEff > 0 && inputs.ftccsCredit === 'q45') return 0; // 45Z barred where 45Q is claimed
+  if (!(sp.cdrEff > 0)) return saf45zCredit(lcaRed, inputs.z45Max);
+  const mjPerGal = C.JET_FUEL_DENSITY * C.LITERS_PER_GALLON * C.JET_LHV_MJ_PER_KG;
+  const storedGPerMJ = storedPerGal(massYield, sp.cdrEff) * 1e6 / mjPerGal;
+  const effRed = lcaRed + storedGPerMJ / C.FOSSIL_JET_CI_G_PER_MJ;
+  return saf45zCredit(effRed, inputs.z45Max);
 }
 
 function evalScenario(inputs) {
   const n = N_DRAWS;
   const results = [];
-  const jetTriple = scaledTriple([2.50, 3.00, 3.50], inputs.jetPrice);
+  const jetTriple = scaledTriple(JET_T, inputs.jetPrice);
+  const ftDef = SAF_PATHWAYS.find(p => p.id === 'ft');
 
   for (const sp of SAF_PATHWAYS) {
-    const mfspMid = sp.id === 'ftccs' ? ftccsMfsp(inputs).total : inputs.mfsp[sp.id];
-    const mfspT = scaledTriple(sp.mfsp, mfspMid);
+    const isCcs = sp.id === 'ftccs';
+    // FT-SAF+CCS: base FT cost and CCS cost are sampled separately and combined per draw
+    const mfspT = isCcs ? scaledTriple(ftDef.mfsp, inputs.mfsp.ft) : scaledTriple(sp.mfsp, inputs.mfsp[sp.id]);
+    const ccsT = scaledTriple(CCS_COST_T, inputs.ccsCost);
     const yieldT = scaledTriple(sp.massYield, inputs.massYield[sp.id]);
     const lcaT = scaledTriple(sp.lca, inputs.lcaRed[sp.id], 0.95);
-    const midLcaFactor = inputs.useLca ? lcaT[1] : 1.0;
-    const midCredit = saf45zCredit(lcaT[1], inputs.z45Max);
-    const mid = safCosts(yieldT[1], mfspT[1], jetTriple[1], midCredit, midLcaFactor, sp.cdrEff, inputs.q45);
+    const run = (y, mfspBase, ccs, jet, lca) => safCosts({
+      massYield: y,
+      mfsp: mfspBase + (isCcs ? ccs * storedPerGal(y, sp.cdrEff) : 0),
+      jetPrice: jet, credit: safCredit(sp, lca, y, inputs),
+      useLca: inputs.useLca, lcaRed: lca, cdrEff: sp.cdrEff, nonCo2: inputs.nonCo2,
+      q45: isCcs && inputs.ftccsCredit === 'z45' ? 0 : inputs.q45,
+    });
+    const mid = run(yieldT[1], mfspT[1], ccsT[1], jetTriple[1], lcaT[1]);
 
     const rand = mulberry32(hashId(sp.id));
     const normal = makeNormal(rand);
-    const gamma = makeGamma(rand, normal);
-    const yields = pertDraws(yieldT[0], yieldT[1], yieldT[2], n, rand, normal, gamma);
-    const mfsps  = pertDraws(mfspT[0], mfspT[1], mfspT[2], n, rand, normal, gamma);
-    const jets   = pertDraws(jetTriple[0], jetTriple[1], jetTriple[2], n, rand, normal, gamma);
-    const lcas   = pertDraws(lcaT[0], lcaT[1], lcaT[2], n, rand, normal, gamma);
+    const yields = splitNormalDraws(yieldT[0], yieldT[1], yieldT[2], n, normal, FRAC);
+    const mfsps  = splitNormalDraws(mfspT[0], mfspT[1], mfspT[2], n, normal, POS);
+    const jets   = splitNormalDraws(jetTriple[0], jetTriple[1], jetTriple[2], n, normal, POS);
+    const lcas   = splitNormalDraws(lcaT[0], lcaT[1], lcaT[2], n, normal, FRAC);
+    const ccss   = isCcs ? splitNormalDraws(ccsT[0], ccsT[1], ccsT[2], n, normal, POS) : null;
     const draws = { gross: new Float64Array(n), net: new Float64Array(n), netWithSubsidy: new Float64Array(n) };
     for (let i = 0; i < n; i++) {
-      const credit = saf45zCredit(lcas[i], inputs.z45Max);
-      const r = safCosts(yields[i], mfsps[i], jets[i], credit, inputs.useLca ? lcas[i] : 1.0, sp.cdrEff, inputs.q45);
+      const r = run(yields[i], mfsps[i], isCcs ? ccss[i] : 0, jets[i], lcas[i]);
       draws.gross[i] = r.gross; draws.net[i] = r.net; draws.netWithSubsidy[i] = r.netWithSubsidy;
     }
     results.push({
@@ -820,9 +844,8 @@ function evalScenario(inputs) {
 
     const rand = mulberry32(hashId(cp.id));
     const normal = makeNormal(rand);
-    const gamma = makeGamma(rand, normal);
-    const costs = pertDraws(costT[0], costT[1], costT[2], n, rand, normal, gamma);
-    const revs  = pertDraws(revT[0], revT[1], revT[2], n, rand, normal, gamma);
+    const costs = splitNormalDraws(costT[0], costT[1], costT[2], n, normal, POS);
+    const revs  = splitNormalDraws(revT[0], revT[1], revT[2], n, normal, POS);
     const draws = { gross: costs, net: new Float64Array(n), netWithSubsidy: new Float64Array(n) };
     for (let i = 0; i < n; i++) {
       draws.net[i] = costs[i] - revs[i];
@@ -844,10 +867,10 @@ function bandOf(draws, q) {
 // STATE
 // ============================================================================
 function defaultInputs() {
-  const inputs = { jetPrice: 3.00, z45Max: 1.00, q45: 85, useLca: false, ccsCost: 150,
+  const inputs = { jetPrice: JET_T[1], z45Max: 1.00, q45: 85, useLca: true, ccsCost: CCS_COST_T[1], ftccsCredit: 'q45', nonCo2: 0,
     h2Credit: 'q45', mfsp: {}, massYield: {}, lcaRed: {}, cdrCost: {}, cdrRev: {}, cdrEff: {} };
   for (const sp of SAF_PATHWAYS) {
-    if (sp.id !== 'ftccs') inputs.mfsp[sp.id] = sp.mfsp[1]; // FT-SAF+CCS is derived: FT base + CCS adder
+    if (sp.mfsp) inputs.mfsp[sp.id] = sp.mfsp[1]; // FT-SAF+CCS has none: derived from FT base + CCS adder
     inputs.massYield[sp.id] = sp.massYield[1];
     inputs.lcaRed[sp.id] = sp.lca[1];
   }
@@ -868,7 +891,7 @@ const state = {
 const METRIC_LABEL = {
   gross: 'Gross cost',
   net: 'Net cost (after fuel / co-product revenue)',
-  netWithSubsidy: 'Net cost with subsidies (45Q + 45Z)',
+  netWithSubsidy: 'Net cost with subsidies (45Q, 45Z, or 45V as applicable)',
 };
 
 // ============================================================================
@@ -926,6 +949,9 @@ function buildControls() {
     { key: 'q45', label: '45Q credit', unit: '$/tCO₂', min: 0, max: 180, step: 5, decimals: 0,
       sub: 'For geologically stored CO₂ (BECCS, WtE+CCS, FT-SAF+CCS)',
       value: () => state.inputs.q45, set: v => { state.inputs.q45 = v; } },
+    { key: 'nonco2', label: 'SAF non-CO₂ credit', unit: '% of CO₂', min: 0, max: 100, step: 5, decimals: 0,
+      sub: 'Sensitivity: extra benefit from fewer contrails (cleaner-burning fuel), as a share of the CO₂ displacement benefit. 0 = not credited (default)',
+      value: () => Math.round(state.inputs.nonCo2 * 100), set: v => { state.inputs.nonCo2 = v / 100; } },
   ];
   for (const def of globals) {
     const row = sliderRow({ ...def, value: def.value(), onChange: v => { def.set(v); update(); } });
@@ -954,6 +980,18 @@ function buildControls() {
       derived.id = 'ftccsDerived';
       derived.style.marginTop = '4px';
       row.appendChild(derived);
+      const zc = document.createElement('div');
+      zc.setAttribute('role', 'radiogroup');
+      zc.setAttribute('aria-label', 'FT-SAF + CCS tax credit election');
+      zc.style.marginTop = '6px';
+      zc.innerHTML = `
+        <div class="sub" style="margin-bottom:4px">Tax credit election — 45Z is unavailable at a facility claiming 45Q (§45Z(d)(4)):</div>
+        <label class="radio-row"><input type="radio" name="ftccscredit" value="q45"> 45Q on stored CO₂ (no 45Z)</label>
+        <label class="radio-row"><input type="radio" name="ftccscredit" value="z45"> 45Z only, with CCS counted in fuel CI (capped at the 45Z max)</label>`;
+      zc.querySelectorAll('input').forEach(rb => rb.addEventListener('change', () => { state.inputs.ftccsCredit = rb.value; update(); }));
+      zc._sync = () => zc.querySelectorAll('input').forEach(rb => { rb.checked = rb.value === state.inputs.ftccsCredit; });
+      controlRegistry.push({ el: zc, getter: () => state.inputs.ftccsCredit });
+      row.appendChild(zc);
     } else {
       row = sliderRow({
         key: 'mfsp-' + sp.id, label: sp.short, unit: '$/gal', cls: 'saf',
@@ -1133,14 +1171,14 @@ function tipForResult(r, metric) {
     const rows = [
       ['Gross production cost', fmt$(m.grossPerT)],
       ['− Jet fuel revenue', fmt$(-m.fuelRevPerT)],
-      ['− 45Z credit', fmt$(-m.zCreditPerT)],
     ];
+    if (m.zCreditPerT > 0 || r.def.cdrEff === 0) rows.push(['− 45Z credit', fmt$(-m.zCreditPerT)]);
     if (m.qCreditPerT > 0) rows.push(['− 45Q on stored CO₂', fmt$(-m.qCreditPerT)]);
     return `<h4>${esc(r.def.name)}</h4>
       <table>${rows.map(x => `<tr><td>${x[0]}</td><td>${x[1]}</td></tr>`).join('')}
       <tr class="total"><td>Net + subsidies</td><td>${fmt$(m.netWithSubsidy)}/tCO₂</td></tr></table>
       <div class="muted" style="margin-top:6px">${m.gallons.toFixed(0)} gal/dry ton · ${m.co2Total.toFixed(2)} tCO₂ benefit/dry ton
-      ${m.co2Removed > 0 ? `(${m.co2Avoided.toFixed(2)} avoided + ${m.co2Removed.toFixed(2)} stored)` : ''}</div>
+      ${m.co2Removed > 0 ? `(${m.co2Avoided.toFixed(2)} avoided + ${m.co2Removed.toFixed(2)} stored)` : ''}${m.nonCo2 > 0 ? ` incl. ${m.nonCo2.toFixed(2)} non-CO₂ credit` : ''}</div>
       <div class="muted">P10–P90: ${fmt$(r.p10[metric])} – ${fmt$(r.p90[metric])}</div>`;
   }
   const rows = [
@@ -1190,7 +1228,7 @@ function renderCostChart(results) {
   for (const t of niceTicks(lo, hi, 6)) {
     el('line', { x1: x(t), x2: x(t), y1: mt, y2: H - mb, stroke: 'var(--grid)', 'stroke-width': 1 }, svg);
     el('text', { x: x(t), y: H - mb + 16, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--ink-3)' }, svg)
-      .textContent = '$' + t.toLocaleString();
+      .textContent = fmt$(Math.abs(t) < 1e-9 ? 0 : t);
   }
   // SCC reference lines
   for (const scc of [50, 200]) {
@@ -1255,17 +1293,16 @@ function renderCarbonChart(results) {
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
 
   // compute segments per row
-  const NET_NEG = 0.95;
   const segRows = rows.map(r => {
     let stored = 0, avoided = 0;
     if (r.type === 'SAF') {
-      stored = r.mid.co2Removed * (useLca ? NET_NEG : 1);
-      avoided = r.mid.co2Avoided; // already LCA-scaled when toggle is on
+      stored = r.mid.co2Removed;                     // already net of 95% negativity in lifecycle mode
+      avoided = r.mid.co2Avoided + r.mid.nonCo2;     // lifecycle-scaled when toggle is on
     } else {
-      stored = C.CO2E_PER_DRY_TON * r.effMid * (useLca ? NET_NEG : 1);
+      stored = C.CO2E_PER_DRY_TON * r.effMid * (useLca ? C.NET_NEG : 1);
       avoided = useLca ? r.def.avoidedPerDt : 0;
     }
-    const grossStored = r.type === 'SAF' ? r.mid.co2Removed : C.CO2E_PER_DRY_TON * r.effMid;
+    const grossStored = r.type === 'SAF' ? C.CO2E_PER_DRY_TON * r.def.cdrEff : C.CO2E_PER_DRY_TON * r.effMid;
     const released = Math.max(0, C.CO2E_PER_DRY_TON - grossStored);
     return { r, stored, avoided, released, total: stored + avoided };
   });
@@ -1299,8 +1336,9 @@ function renderCarbonChart(results) {
       el('path', { d: barPath(x(0), x(s.stored) - GAP / 2, by, barH), fill: 'var(--cdr)', class: 'bar-main' }, gEl);
       cursor = s.stored;
     }
-    const grossStored = C.CO2E_PER_DRY_TON - s.released;
-    if (s.released > 0.005) {
+    // released segment starts where net storage ends (in lifecycle mode the 5% net-negativity haircut is shown as released)
+    const grossStored = s.stored;
+    if (C.CO2E_PER_DRY_TON - s.stored > 0.005) {
       el('rect', { x: x(grossStored) + GAP / 2, y: by, width: Math.max(0, x(C.CO2E_PER_DRY_TON) - x(grossStored) - GAP), height: barH, rx: 2, fill: 'var(--released)' }, gEl);
     }
     if (s.avoided > 0.005) {
@@ -1312,7 +1350,7 @@ function renderCarbonChart(results) {
     el('rect', { x: 0, y: mt + i * rowH, width: W, height: rowH, fill: 'transparent' }, gEl);
     attachTip(gEl, () => `<h4>${esc(s.r.def.name)}</h4><table>
       <tr><td>CO₂ stored${useLca ? ' (net of 95% negativity)' : ''}</td><td>${s.stored.toFixed(2)}</td></tr>
-      <tr><td>CO₂ avoided${useLca && s.r.type === 'SAF' ? ' (lifecycle-adjusted)' : ''}</td><td>${s.avoided.toFixed(2)}</td></tr>
+      <tr><td>CO₂ avoided${useLca && s.r.type === 'SAF' ? ' (lifecycle-adjusted)' : ''}${s.r.type === 'SAF' && s.r.mid.nonCo2 > 0 ? ' incl. non-CO₂ credit' : ''}</td><td>${s.avoided.toFixed(2)}</td></tr>
       <tr><td>CO₂ released</td><td>${s.released.toFixed(2)}</td></tr>
       <tr class="total"><td>Total climate benefit</td><td>${s.total.toFixed(2)} tCO₂/dt</td></tr></table>`);
   });
@@ -1321,6 +1359,10 @@ function renderCarbonChart(results) {
 // ============================================================================
 // TILES & TABLE
 // ============================================================================
+// CDR climate benefit per dry ton, matching the carbon chart's accounting
+function cdrBenefitPerDt(r, useLca) {
+  return C.CO2E_PER_DRY_TON * r.effMid * (useLca ? C.NET_NEG : 1) + (useLca ? r.def.avoidedPerDt : 0);
+}
 function renderTiles(results) {
   // Benchmarks are the most common pathways today, not the cheapest options:
   // FT-SAF (ag/forest waste) for SAF, BECCS (electricity) for CDR.
@@ -1330,15 +1372,14 @@ function renderTiles(results) {
   const gap = saf.mid[metric] - cdr.mid[metric];
 
   const useLca = state.inputs.useLca;
-  const NET_NEG = 0.95;
-  const cdrCarbon = C.CO2E_PER_DRY_TON * cdr.effMid * (useLca ? NET_NEG : 1) + (useLca ? cdr.def.avoidedPerDt : 0);
+  const cdrCarbon = cdrBenefitPerDt(cdr, useLca);
   const ratio = cdrCarbon / saf.mid.co2Total;
 
   const tiles = [
     { label: 'SAF benchmark', dot: 'var(--saf)', value: fmt$(saf.mid[metric]) + '/t',
-      sub: 'FT-SAF (ag/forest waste), the leading cellulosic SAF route' },
+      sub: 'FT-SAF (ag/forest waste), a cellulosic route that uses the same residues as BiCRS' },
     { label: 'CDR benchmark', dot: 'var(--cdr)', value: fmt$(cdr.mid[metric]) + '/t',
-      sub: 'BECCS (electricity), the most common BiCRS pathway today' },
+      sub: 'BECCS (electricity), an established BiCRS pathway on the same feedstock' },
     { label: 'Cost gap, same biomass', dot: null,
       value: (gap >= 0 ? '+' : '−') + fmt$(Math.abs(gap)),
       sub: gap >= 0 ? 'BECCS (electricity) is cheaper per tCO₂ than FT-SAF' : 'FT-SAF is cheaper per tCO₂ than BECCS (electricity)' },
@@ -1362,7 +1403,7 @@ function renderTable(results) {
     <th>tCO₂ benefit / dry ton</th></tr></thead><tbody>`;
   for (const g of groups) {
     for (const r of g.rows) {
-      const co2 = r.type === 'SAF' ? r.mid.co2Total : C.CO2E_PER_DRY_TON * r.effMid;
+      const co2 = r.type === 'SAF' ? r.mid.co2Total : cdrBenefitPerDt(r, state.inputs.useLca);
       html += `<tr>
         <td>${esc(r.def.name)}<span class="type-pill ${r.type === 'SAF' ? 'saf' : 'cdr'}">${r.type === 'SAF' && r.def.cdrEff > 0 ? 'SAF+CDR' : r.type}</span></td>
         <td>${fmt$(r.mid.gross)}</td>
@@ -1392,7 +1433,9 @@ function readHash() {
     const p = JSON.parse(atob(m[1]));
     const d = defaultInputs();
     if (p.i && typeof p.i === 'object') {
-      for (const k of ['jetPrice', 'z45Max', 'q45', 'useLca', 'ccsCost']) if (k in p.i) d[k] = p.i[k];
+      for (const k of ['jetPrice', 'z45Max', 'q45', 'ccsCost', 'nonCo2']) if (typeof p.i[k] === 'number') d[k] = p.i[k];
+      if (typeof p.i.useLca === 'boolean') d.useLca = p.i.useLca;
+      if (['q45', 'z45'].includes(p.i.ftccsCredit)) d.ftccsCredit = p.i.ftccsCredit;
       if (['q45', 'v45'].includes(p.i.h2Credit)) d.h2Credit = p.i.h2Credit;
       for (const grp of ['mfsp', 'massYield', 'lcaRed', 'cdrCost', 'cdrRev', 'cdrEff'])
         for (const id in d[grp]) if (p.i[grp] && typeof p.i[grp][id] === 'number') d[grp][id] = p.i[grp][id];
@@ -1459,7 +1502,7 @@ document.getElementById('resetBtn').addEventListener('click', () => {
   state.inputs = defaultInputs();
   syncControls();
   document.querySelectorAll('#lcaSeg button').forEach(b =>
-    b.setAttribute('aria-pressed', b.dataset.lca === '0' ? 'true' : 'false'));
+    b.setAttribute('aria-pressed', (b.dataset.lca === '1') === state.inputs.useLca ? 'true' : 'false'));
   update();
 });
 document.getElementById('copyBtn').addEventListener('click', async e => {
