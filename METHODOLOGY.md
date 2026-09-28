@@ -377,6 +377,15 @@ See the SAF pathway table above (CORSIA 8th edition defaults, November 2025). In
 
 ---
 
+## Social cost of carbon reference lines
+
+The explorer's cost chart shows two reference lines from EPA's *Report on the Social Cost of Greenhouse Gases* (November 2023), Table A.5.1, for 2025 emissions: **$130/tCO2 at a 2.5% near-term discount rate and $360 at 1.5%** (central $212 at 2.0%), in 2020 dollars. They are converted to 2025 dollars with the BEA GDP implicit price deflator (FRED `GDPDEF`, 2025 annual mean 128.97 / 2020 annual mean 105.36 = 1.224), giving **$159 and $441**. Context:
+- Rennert et al. (2022, *Nature*) preferred mean $185/tCO2 (5–95%: $44–413; 2020$, 2% discount). Their GIVE model is one of EPA's three damage modules, so it is not fully independent of EPA's values.
+- Moore et al. (2024, NBER WP 32544 / *PNAS*): synthetic distribution median $185, mean $284 (5–95%: $32–874), 2020 pulse year.
+- The 2021 IWG interim value was $51 (3% discount, 2020 emissions, 2020$).
+- Current US federal status: Executive Order 14154 (Jan 20, 2025) disbanded the IWG and withdrew its estimates; OMB memo M-25-27 (May 5, 2025) states "it is no longer Federal government policy to maintain a uniform estimate of the monetized impacts of greenhouse gas emissions" and that such analysis will be needed in "few to none" cases, reverting to Circular A-4 (2003) where used.
+- Replaces the earlier unsourced "$50 / $200" lines (changed 2026-09-28).
+
 ## Summary Results (Central Estimates, September 2026 defaults)
 
 Generated from the explorer defaults. P10–P90 are Monte Carlo percentiles of the net + subsidy cost. "tCO2 benefit/dry ton" is per ton of oil for the lipid pathways and per ton of MSW or wet waste for those pathways.

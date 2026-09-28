@@ -629,7 +629,7 @@
       <span class="key"><i style="background:var(--hyb)"></i> SAF + CCS (avoided + stored)</span>
       <span class="key"><i style="background:var(--cdr)"></i> CDR (removed CO₂)</span>
       <span class="key"><i style="background:none;border-bottom:2px solid var(--ink-2);height:0;border-radius:0"></i> P10–P90 range</span>
-      <span class="key"><i style="background:none;border-left:1px dashed var(--ink-3);width:0;border-radius:0"></i> Social cost of carbon $50 / $200</span>
+      <span class="key"><i style="background:none;border-left:1px dashed var(--ink-3);width:0;border-radius:0"></i> Social cost of carbon, EPA 2023: $159 (2.5% discount rate) to $441 (1.5%), 2025$</span>
     </div>
   </section>
 
@@ -695,6 +695,15 @@
        upper bound for SAF: each gallon is credited with the full well-to-wake emissions of the fossil jet it replaces,
        as if producing the SAF emitted nothing, and CDR storage is counted gross. In both modes the lifecycle
        reduction still sets the 45Z credit, which the law ties to the fuel's actual carbon intensity.</p>
+    <h3>Social cost of carbon lines</h3>
+    <p>The dashed reference lines are EPA's 2023 estimates of the social cost of CO₂ for 2025 emissions
+       (<a href="https://cfpub.epa.gov/si/si_public_record_report.cfm?Lab=NCEE&amp;dirEntryID=356357">Report on the Social
+       Cost of Greenhouse Gases</a>, Table A.5.1): $130 at a 2.5% discount rate and $360 at 1.5% (central $212 at 2.0%),
+       in 2020 dollars, shown here as $159 and $441 in 2025 dollars using the GDP price deflator. Independent estimates
+       fall in a similar range: Rennert et al. (2022) find a mean of $185 (5–95%: $44–413, 2020$), and a meta-analysis by
+       Moore et al. (2024) a median of $185. These are not the values US agencies currently apply: Executive Order 14154
+       (January 2025) withdrew the interagency estimates, and OMB memo M-25-27 (May 2025) states that monetized
+       greenhouse gas analysis will be needed in "few to none" cases.</p>
     <h3>Caveats</h3>
     <p>Avoided ≠ removed: SAF benefits are counterfactual and shrink if aviation decarbonizes another way; CDR removals are
        permanent. Non-CO₂ effects are off by default; the <em>SAF non-CO₂ credit</em> slider adds them as a sensitivity.
@@ -872,6 +881,13 @@ function scaledTriple(orig, newMid, clampHi) {
 }
 
 const N_DRAWS = 4000;
+// Social cost of CO2 reference lines: EPA (Nov 2023) SC-GHG report, Table A.5.1, 2025 emissions,
+// $130 (2.5% discount) and $360 (1.5%) in 2020$, converted to 2025$ with the BEA GDP deflator
+// (FRED GDPDEF annual mean 2025 / 2020 = 128.97 / 105.36 = 1.224).
+const SCC_LINES = [
+  { value: 159, label: 'SCC low $159', note: '2.5% discount' },
+  { value: 441, label: 'SCC high $441', note: '1.5% discount' },
+];
 const JET_T = [2.10, 2.75, 4.00]; // $/gal, P10/P50/P90 (US Gulf Coast; 2022-26 mean ~$2.78)
 const H2_KG_PER_DRY_TON = 50;   // Mote PFD: 0.05 t H2 per dry ton of biomass
 const V45_PER_KG_H2 = 3.00;     // 45V max ($/kg, CI < 0.45 kgCO2e/kg + prevailing wage)
@@ -1387,7 +1403,7 @@ function renderCostChart(results) {
     maxMid = Math.max(maxMid, r.mid[metric]);
   }
   hi = Math.min(hi, Math.max(maxMid * 1.3, 400));
-  hi = Math.max(hi, 220); // keep SCC lines visible
+  hi = Math.max(hi, SCC_LINES[SCC_LINES.length - 1].value * 1.04); // keep SCC lines visible
   const span = hi - lo || 1;
   lo -= span * 0.02; hi += span * 0.06;
   const x = v => ml + (Math.min(v, hi) - lo) / (hi - lo) * (W - ml - mr);
@@ -1399,10 +1415,10 @@ function renderCostChart(results) {
       .textContent = fmt$(Math.abs(tk) < 1e-9 ? 0 : tk);
   }
   // SCC reference lines
-  for (const scc of [50, 200]) {
-    if (scc > lo && scc < hi) {
-      el('line', { x1: x(scc), x2: x(scc), y1: mt, y2: H - mb, stroke: 'var(--ink-3)', 'stroke-width': 1, 'stroke-dasharray': '3,4', opacity: 0.7 }, svg);
-      if (!narrow) el('text', { x: x(scc) + 3, y: mt + 9, 'font-size': 10, fill: 'var(--ink-3)' }, svg).textContent = 'SCC $' + scc;
+  for (const s of SCC_LINES) {
+    if (s.value > lo && s.value < hi) {
+      el('line', { x1: x(s.value), x2: x(s.value), y1: mt, y2: H - mb, stroke: 'var(--ink-3)', 'stroke-width': 1, 'stroke-dasharray': '3,4', opacity: 0.7 }, svg);
+      if (!narrow) el('text', { x: x(s.value) + 3, y: mt + 9, 'font-size': 10, fill: 'var(--ink-3)', 'paint-order': 'stroke', stroke: 'var(--surface)', 'stroke-width': 3 }, svg).textContent = s.label;
     }
   }
   // zero baseline
@@ -1729,7 +1745,7 @@ function update() {
       (state.inputs.useLca
         ? 'Full lifecycle accounting: SAF benefit reduced by lifecycle emissions.'
         : 'Simple displacement accounting (upper bound for SAF): each gallon credited with the full well-to-wake emissions of fossil jet.') +
-      ' Dashed lines mark $50 and $200 social cost of carbon.';
+      ' Dashed lines mark EPA’s 2023 social cost of carbon range for 2025 emissions ($159–441, 2025$).';
     document.getElementById('carbonSub').textContent =
       'Where the 1.83 tCO₂e in each dry tonne (1,000 kg) of biomass ends up, plus avoided fossil emissions beyond it. ' +
       (state.inputs.useLca
