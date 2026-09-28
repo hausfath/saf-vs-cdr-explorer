@@ -699,8 +699,9 @@
     <p>The dashed reference lines are EPA's 2023 estimates of the social cost of CO₂ for 2025 emissions
        (<a href="https://cfpub.epa.gov/si/si_public_record_report.cfm?Lab=NCEE&amp;dirEntryID=356357">Report on the Social
        Cost of Greenhouse Gases</a>, Table A.5.1): $130 at a 2.5% discount rate and $360 at 1.5% (central $212 at 2.0%),
-       in 2020 dollars, shown here as $159 and $441 in 2025 dollars using the GDP price deflator. Independent estimates
-       fall in a similar range: Rennert et al. (2022) find a mean of $185 (5–95%: $44–413, 2020$), and a meta-analysis by
+       in 2020 dollars, shown here as $159 and $441 in 2025 dollars using the GDP price deflator. The two lines span
+       EPA's discount-rate range only, not its full uncertainty range, which is much wider. Other estimates: Rennert et al.
+       (2022; one of EPA's three damage models) find a mean of $185 (5–95%: $44–413, 2020$), and a meta-analysis by
        Moore et al. (2024) a median of $185. These are not the values US agencies currently apply: Executive Order 14154
        (January 2025) withdrew the interagency estimates, and OMB memo M-25-27 (May 2025) states that monetized
        greenhouse gas analysis will be needed in "few to none" cases.</p>
@@ -1745,7 +1746,7 @@ function update() {
       (state.inputs.useLca
         ? 'Full lifecycle accounting: SAF benefit reduced by lifecycle emissions.'
         : 'Simple displacement accounting (upper bound for SAF): each gallon credited with the full well-to-wake emissions of fossil jet.') +
-      ' Dashed lines mark EPA’s 2023 social cost of carbon range for 2025 emissions ($159–441, 2025$).';
+      ' Dashed lines mark EPA’s 2023 social cost of carbon for 2025 emissions at 2.5% and 1.5% discount rates ($159 and $441, 2025$).';
     document.getElementById('carbonSub').textContent =
       'Where the 1.83 tCO₂e in each dry tonne (1,000 kg) of biomass ends up, plus avoided fossil emissions beyond it. ' +
       (state.inputs.useLca

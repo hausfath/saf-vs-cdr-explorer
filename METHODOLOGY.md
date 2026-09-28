@@ -379,7 +379,7 @@ See the SAF pathway table above (CORSIA 8th edition defaults, November 2025). In
 
 ## Social cost of carbon reference lines
 
-The explorer's cost chart shows two reference lines from EPA's *Report on the Social Cost of Greenhouse Gases* (November 2023), Table A.5.1, for 2025 emissions: **$130/tCO2 at a 2.5% near-term discount rate and $360 at 1.5%** (central $212 at 2.0%), in 2020 dollars. They are converted to 2025 dollars with the BEA GDP implicit price deflator (FRED `GDPDEF`, 2025 annual mean 128.97 / 2020 annual mean 105.36 = 1.224), giving **$159 and $441**. Context:
+The explorer's cost chart shows two reference lines from EPA's *Report on the Social Cost of Greenhouse Gases* (November 2023), Table A.5.1, for 2025 emissions: **$130/tCO2 at a 2.5% near-term discount rate and $360 at 1.5%** (central $212 at 2.0%), in 2020 dollars. They are converted to 2025 dollars with the BEA GDP implicit price deflator (FRED `GDPDEF`, 2025 annual mean 128.97 / 2020 annual mean 105.36 = 1.224), giving **$159 and $441**. The pair spans EPA's discount-rate range only, not its (much wider) damage-uncertainty range. Context:
 - Rennert et al. (2022, *Nature*) preferred mean $185/tCO2 (5–95%: $44–413; 2020$, 2% discount). Their GIVE model is one of EPA's three damage modules, so it is not fully independent of EPA's values.
 - Moore et al. (2024, NBER WP 32544 / *PNAS*): synthetic distribution median $185, mean $284 (5–95%: $32–874), 2020 pulse year.
 - The 2021 IWG interim value was $51 (3% discount, 2020 emissions, 2020$).

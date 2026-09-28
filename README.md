@@ -33,8 +33,8 @@ assumption adjustable.
 45Z expired, CCS at $150/t) load in one click, each with a short link such as `#preset=ft4`. A
 **break-even panel** shows, live, the jet fuel price, FT-SAF production cost and non-CO₂ credit at which
 FT-SAF would cost the same per tonne as BECCS (electricity), holding everything else at the current settings.
-Cost chart reference lines show EPA's 2023 social cost of carbon range for 2025 emissions ($159–441/tCO₂,
-2025 dollars).
+Cost chart reference lines show EPA's 2023 social cost of carbon for 2025 emissions at 2.5% and 1.5%
+discount rates ($159 and $441/tCO₂, 2025 dollars); this is a discount-rate range, not EPA's full uncertainty range.
 
 Results update live: benchmark tiles (FT-SAF vs BECCS-electricity, the most common pathways
 today), a $/tCO₂ comparison chart with P10–P90 uncertainty ranges, a carbon-fate-per-dry-ton
