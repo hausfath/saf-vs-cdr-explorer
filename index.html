@@ -211,6 +211,18 @@
   details.ctl-group > summary .count {
     font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--ink-3); margin-left: 4px;
   }
+  details.modified > summary::after {
+    content: "edited";
+    margin-left: 8px;
+    padding: 0 6px;
+    border-radius: 999px;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    color: var(--paper);
+    background: var(--ink-2);
+  }
   details.ctl-group > summary .count::before { content: "("; }
   details.ctl-group > summary .count::after { content: ")"; }
   .ctl-section > h3 .swatch {
@@ -1121,6 +1133,25 @@ function syncControls() {
   for (const { el, getter } of controlRegistry) el._sync(getter());
 }
 
+// Flag disclosure groups that contain a non-default assumption, so a shared scenario
+// link never hides the reason its results differ. open=true also expands them.
+function refreshModified(open) {
+  const saved = state.inputs;
+  state.inputs = defaultInputs();
+  const defaults = controlRegistry.map(c => c.getter());
+  state.inputs = saved;
+  document.querySelectorAll('details.modified').forEach(d => d.classList.remove('modified'));
+  controlRegistry.forEach((c, i) => {
+    const v = c.getter(), d = defaults[i];
+    const changed = typeof v === 'number' ? Math.abs(v - d) > 1e-9 : v !== d;
+    if (!changed) return;
+    for (let n = c.el.closest('details'); n; n = n.parentElement && n.parentElement.closest('details')) {
+      n.classList.add('modified');
+      if (open) n.open = true;
+    }
+  });
+}
+
 // ============================================================================
 // CHART HELPERS
 // ============================================================================
@@ -1512,6 +1543,7 @@ function update() {
     const derivedEl = document.getElementById('ftccsDerived');
     if (derivedEl) derivedEl.textContent =
       `Resulting MFSP: $${d.base.toFixed(2)} base + $${d.ccsAdder.toFixed(2)} CCS = $${d.total.toFixed(2)}/gal`;
+    refreshModified(false);
     renderTiles(results);
     renderCostChart(results);
     renderCarbonChart(results);
@@ -1600,6 +1632,7 @@ if ('ResizeObserver' in window) {
 readHash();
 buildControls();
 syncControls();
+refreshModified(true);
 document.querySelectorAll('#metricSeg button').forEach(b =>
   b.setAttribute('aria-pressed', b.dataset.metric === state.metric ? 'true' : 'false'));
 document.querySelectorAll('#lcaSeg button').forEach(b =>
