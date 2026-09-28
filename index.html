@@ -124,15 +124,19 @@
     grid-template-columns: 330px minmax(0, 1fr);
     grid-template-areas:
       "rail viewbar"
+      "rail presets"
       "rail tiles"
       "rail cost"
+      "rail be"
       "rail main";
-    grid-template-rows: auto auto auto 1fr;
+    grid-template-rows: auto auto auto auto auto 1fr;
     column-gap: 26px;
     align-items: start;
   }
   .layout > .viewbar { grid-area: viewbar; }
   .layout > .tiles { grid-area: tiles; }
+  .layout > .presets { grid-area: presets; }
+  .layout > .be-card { grid-area: be; }
   .layout > .cost-card { grid-area: cost; }
   .layout > main { grid-area: main; }
   .layout > aside.controls { grid-area: rail; }
@@ -140,7 +144,7 @@
   @media (max-width: 900px) {
     .layout {
       grid-template-columns: minmax(0, 1fr);
-      grid-template-areas: "viewbar" "tiles" "cost" "rail" "main";
+      grid-template-areas: "viewbar" "presets" "tiles" "cost" "be" "rail" "main";
       grid-template-rows: none;
       padding: 16px 16px 48px;
     }
@@ -362,6 +366,34 @@
   }
   button.copylink:hover { color: var(--ink); border-color: var(--ink-3); }
 
+  .presets { margin: -4px 0 14px; }
+  .presets .seg-label { display: block; margin: 0 0 6px; }
+  .preset-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .preset-row button {
+    font: inherit; font-size: 12.5px; color: var(--ink-2);
+    background: var(--surface); border: 1px solid var(--border); border-radius: 999px;
+    padding: 4px 11px; cursor: pointer;
+  }
+  .preset-row button:hover { color: var(--ink); border-color: var(--ink-3); }
+  .preset-row button[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .preset-desc { margin: 7px 0 0; font-size: 12.5px; color: var(--ink-2); min-height: 1.45em; }
+  .be-status { font-size: 14px; margin: 0 0 10px; }
+  .be-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1.3fr) auto; gap: 0 14px; font-size: 13px; }
+  .be-grid > div { padding: 7px 0; border-top: 1px solid var(--grid); font-variant-numeric: tabular-nums; }
+  .be-grid .be-h { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); border-top: none; padding-top: 0; }
+  .be-grid .be-val { font-weight: 600; }
+  .be-grid .be-note { font-size: 11.5px; color: var(--ink-3); font-weight: 400; display: block; }
+  .be-grid button {
+    font: inherit; font-size: 12px; color: var(--ink-2); background: none;
+    border: 1px solid var(--border); border-radius: 6px; padding: 2px 9px; cursor: pointer;
+  }
+  .be-grid button:hover { color: var(--ink); border-color: var(--ink-3); }
+  .be-ccs { margin: 12px 0 2px; font-size: 13px; color: var(--ink-2); }
+  .be-ccs strong { color: var(--ink); }
+  @media (max-width: 560px) {
+    .be-grid { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.2fr); }
+    .be-grid .be-act { display: none; }
+  }
   .tiles {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
@@ -567,6 +599,12 @@
     <button class="copylink" id="copyBtn" title="Copy a URL that restores these exact assumptions">Copy scenario link</button>
   </div>
 
+  <section class="presets" aria-label="Scenario presets">
+    <span class="seg-label">Scenarios</span>
+    <div class="preset-row" id="presetRow"></div>
+    <p class="preset-desc" id="presetDesc" aria-live="polite"></p>
+  </section>
+
   <section class="tiles" id="tiles" aria-label="Headline results"></section>
 
   <aside class="controls" aria-label="Model assumptions">
@@ -593,6 +631,12 @@
       <span class="key"><i style="background:none;border-bottom:2px solid var(--ink-2);height:0;border-radius:0"></i> P10–P90 range</span>
       <span class="key"><i style="background:none;border-left:1px dashed var(--ink-3);width:0;border-radius:0"></i> Social cost of carbon $50 / $200</span>
     </div>
+  </section>
+
+  <section class="card be-card" id="beCard" aria-label="Break-even conditions">
+    <h2 id="beTitle">What would it take for FT-SAF to match BECCS (electricity)?</h2>
+    <p class="card-sub" id="beSub"></p>
+    <div id="beBody"></div>
   </section>
 
 <main>
@@ -855,8 +899,11 @@ function safCredit(sp, lcaRed, massYield, inputs) {
   return saf45zCredit(effRed, inputs.z45Max);
 }
 
-function evalScenario(inputs) {
+// opts.midOnly skips the Monte Carlo and returns central values only (used by the
+// break-even solver, which calls this many times per update).
+function evalScenario(inputs, opts) {
   const n = N_DRAWS;
+  const midOnly = !!(opts && opts.midOnly);
   const results = [];
   const jetTriple = scaledTriple(JET_T, inputs.jetPrice);
   const ftDef = SAF_PATHWAYS.find(p => p.id === 'ft');
@@ -876,6 +923,7 @@ function evalScenario(inputs) {
       q45: isCcs && inputs.ftccsCredit === 'z45' ? 0 : inputs.q45,
     });
     const mid = run(yieldT[1], mfspT[1], ccsT[1], jetTriple[1], lcaT[1]);
+    if (midOnly) { results.push({ def: sp, type: 'SAF', mid, lcaMid: lcaT[1] }); continue; }
 
     const rand = mulberry32(hashId(sp.id));
     const normal = makeNormal(rand);
@@ -909,6 +957,7 @@ function evalScenario(inputs) {
       subLabel = '45V credit on H₂';
     }
     const mid = cdrCosts(costT[1], revT[1], sub);
+    if (midOnly) { results.push({ def: cp, type: 'CDR', mid, effMid: effT[1], revMid: revT[1], subMid: sub, subLabel }); continue; }
 
     const rand = mulberry32(hashId(cp.id));
     const normal = makeNormal(rand);
@@ -962,6 +1011,50 @@ const METRIC_LABEL = {
   netWithSubsidy: 'Net cost with subsidies (45Q, 45Z, or 45V as applicable)',
 };
 
+// ============================================================================
+// BREAK-EVENS (central values only) and SCENARIO PRESETS
+// ============================================================================
+function midCost(inputs, id, metric) {
+  return evalScenario(inputs, { midOnly: true }).find(r => r.def.id === id).mid[metric];
+}
+// Value of one lever at which pathway `id` costs the same as `benchId`, holding
+// all other inputs fixed. Returns { value } or { value: null, reason }.
+const BE_LEVERS = {
+  jet:    { get: i => i.jetPrice,   set: (i, v) => { i.jetPrice = v; },   lo: 0,   hi: 15 },
+  ftMfsp: { get: i => i.mfsp.ft,    set: (i, v) => { i.mfsp.ft = v; },    lo: 0.5, hi: 25 },
+  nonCo2: { get: i => i.nonCo2,     set: (i, v) => { i.nonCo2 = v; },     lo: 0,   hi: 3 },
+};
+function breakEven(inputs, lever, id, benchId, metric) {
+  const L = BE_LEVERS[lever];
+  const target = midCost(inputs, benchId, metric);
+  const f = v => { const i = structuredClone(inputs); L.set(i, v); return midCost(i, id, metric) - target; };
+  let a = L.lo, b = L.hi, fa = f(a), fb = f(b);
+  if (Math.abs(fa - fb) < 1e-9) return { value: null, reason: 'no effect on this cost basis' };
+  if (fa * fb > 0) return { value: null, reason: 'not reachable' };
+  for (let k = 0; k < 50; k++) {
+    const m = (a + b) / 2, fm = f(m);
+    if (fa * fm <= 0) { b = m; fb = fm; } else { a = m; fa = fm; }
+  }
+  return { value: (a + b) / 2 };
+}
+// Presets are default inputs plus overrides; results always come from the model.
+const PRESETS = [
+  { id: 'central', label: 'Central', desc: 'Default assumptions (September 2026 calibration).', apply: () => {} },
+  { id: 'ft4',  label: 'FT at $4/gal', desc: 'FT-SAF reaches its projected nth-of-a-kind production cost.', apply: i => { i.mfsp.ft = 4; } },
+  { id: 'ft10', label: 'FT at $10/gal', desc: 'FT-SAF at a first-of-a-kind production cost.', apply: i => { i.mfsp.ft = 10; } },
+  { id: 'jet438', label: 'Jet at $4.38', desc: 'US Gulf Coast jet fuel at its September 2026 price.', apply: i => { i.jetPrice = 4.38; } },
+  { id: 'nonco2-20', label: '+20% non-CO₂', desc: 'SAF credited for fewer contrails, near the GWP100 end of the literature range.', apply: i => { i.nonCo2 = 0.2; } },
+  { id: 'nonco2-60', label: '+60% non-CO₂', desc: 'SAF credited for fewer contrails, near the GWP* end of the literature range.', apply: i => { i.nonCo2 = 0.6; } },
+  { id: 'no45z', label: '45Z expired', desc: 'No clean fuel credit, as scheduled after 2029 under current law.', apply: i => { i.z45Max = 0; } },
+  { id: 'ccs150', label: 'CCS at $150/t', desc: 'Higher CCS cost for FT-SAF + CCS (the pre-September 2026 default).', apply: i => { i.ccsCost = 150; } },
+];
+function presetInputs(id, useLca) {
+  const p = PRESETS.find(x => x.id === id);
+  const i = defaultInputs();
+  if (useLca !== undefined) i.useLca = useLca;
+  p.apply(i);
+  return i;
+}
 </script>
 
 <script>
@@ -1504,14 +1597,23 @@ function renderTable(results) {
 // ============================================================================
 // URL STATE (shareable scenarios)
 // ============================================================================
+// Preset scenarios with default view settings get a short, readable link (#preset=ft4);
+// anything else is encoded in full (#s=...).
 function writeHash() {
   try {
+    const pid = activePreset();
+    if (pid && state.inputs.useLca && state.metric === 'netWithSubsidy' && state.showWhiskers) {
+      history.replaceState(null, '', '#preset=' + pid);
+      return;
+    }
     const payload = { i: state.inputs, m: state.metric, w: state.showWhiskers };
     history.replaceState(null, '', '#s=' + btoa(JSON.stringify(payload)));
   } catch (e) { /* ignore */ }
 }
 function readHash() {
   try {
+    const pm = location.hash.match(/#preset=([\w-]+)/);
+    if (pm && PRESETS.some(p => p.id === pm[1])) { state.inputs = presetInputs(pm[1], true); return; }
     const m = location.hash.match(/#s=(.+)/);
     if (!m) return;
     const p = JSON.parse(atob(m[1]));
@@ -1531,6 +1633,78 @@ function readHash() {
 }
 
 // ============================================================================
+// SCENARIO PRESETS & BREAK-EVEN PANEL
+// ============================================================================
+function sameInputs(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+function activePreset() {
+  const p = PRESETS.find(p => sameInputs(state.inputs, presetInputs(p.id, state.inputs.useLca)));
+  return p ? p.id : null;
+}
+function applyPreset(id) {
+  state.inputs = presetInputs(id, state.inputs.useLca); // keeps the reader's accounting choice
+  syncControls();
+  update();
+}
+function buildPresets() {
+  const row = document.getElementById('presetRow');
+  row.innerHTML = PRESETS.map(p => `<button type="button" data-preset="${p.id}" aria-pressed="false">${p.label}</button>`).join('');
+  row.addEventListener('click', e => { const b = e.target.closest('button'); if (b) applyPreset(b.dataset.preset); });
+}
+function renderPresets() {
+  const pid = activePreset();
+  document.querySelectorAll('#presetRow button').forEach(b => b.setAttribute('aria-pressed', b.dataset.preset === pid ? 'true' : 'false'));
+  const p = PRESETS.find(x => x.id === pid);
+  document.getElementById('presetDesc').textContent = p ? p.desc : 'Custom scenario: your own combination of assumptions.';
+}
+
+const BE_ROWS = [
+  { lever: 'jet', label: 'Jet fuel price', fmt: v => '$' + v.toFixed(2) + '/gal', range: [1, 6] },
+  { lever: 'ftMfsp', label: 'FT-SAF production cost', fmt: v => '$' + v.toFixed(2) + '/gal', range: [1, 18] },
+  { lever: 'nonCo2', label: 'SAF non-CO₂ credit', fmt: v => Math.round(v * 100) + '%', range: [0, 1],
+    note: v => v > 1.0 ? 'beyond the literature range' : v > 0.78 ? 'above the GWP* range (~46–78%)' : '' },
+];
+function renderBreakEven(results) {
+  const metric = state.metric, inp = state.inputs;
+  const byId = Object.fromEntries(results.map(r => [r.def.id, r]));
+  const ft = byId.ft.mid[metric], bench = byId.beccsE.mid[metric], ccs = byId.ftccs.mid[metric];
+  const basis = { gross: 'gross cost', net: 'net of revenues', netWithSubsidy: 'net of revenues and credits' }[metric];
+  const acct = inp.useLca ? 'full lifecycle' : 'simple displacement';
+  document.getElementById('beSub').textContent =
+    `Each row changes one assumption until FT-SAF costs the same per tonne as BECCS (electricity), holding everything else at your current settings (${basis}, ${acct} accounting).`;
+  const gap = ft - bench;
+  const status = Math.abs(gap) < 0.5
+    ? 'FT-SAF and BECCS (electricity) cost the same under these assumptions.'
+    : gap > 0
+      ? `FT-SAF costs <strong>${fmt$(gap)}/t more</strong> than BECCS (electricity) (${fmt$(ft)} vs ${fmt$(bench)}).`
+      : `FT-SAF is already <strong>${fmt$(-gap)}/t cheaper</strong> than BECCS (electricity) (${fmt$(ft)} vs ${fmt$(bench)}). The values below are where they would be equal.`;
+  let html = `<p class="be-status">${status}</p><div class="be-grid">
+    <div class="be-h">Assumption</div><div class="be-h">Now</div><div class="be-h">Break-even</div><div class="be-h be-act"></div>`;
+  for (const row of BE_ROWS) {
+    const now = BE_LEVERS[row.lever].get(inp);
+    const be = breakEven(inp, row.lever, 'ft', 'beccsE', metric);
+    const note = be.value !== null && row.note ? row.note(be.value) : '';
+    html += `<div>${row.label}</div><div>${row.fmt(now)}</div>
+      <div class="be-val">${be.value === null ? `<span class="be-note">${be.reason}</span>` : row.fmt(be.value) + (note ? `<span class="be-note">${note}</span>` : '')}</div>
+      <div class="be-act">${be.value === null || be.value < row.range[0] || be.value > row.range[1] ? '' : `<button type="button" data-lever="${row.lever}" data-value="${be.value}" aria-label="Set ${row.label} to its break-even value">Set</button>`}</div>`;
+  }
+  html += '</div>';
+  const ccsBe = breakEven(inp, 'ftMfsp', 'ftccs', 'beccsE', metric);
+  const ccsGap = ccs - bench;
+  html += `<p class="be-ccs"><strong>FT-SAF + CCS</strong> costs ${fmt$(ccs)}/t, ${Math.abs(ccsGap) < 0.5 ? 'the same as' : ccsGap < 0 ? fmt$(-ccsGap) + '/t less than' : fmt$(ccsGap) + '/t more than'} BECCS (electricity).` +
+    (ccsBe.value === null ? '' : ` The two are equal at an FT-SAF production cost of ${'$' + ccsBe.value.toFixed(2)}/gal.`) + '</p>';
+  const body = document.getElementById('beBody');
+  body.innerHTML = html;
+  body.querySelectorAll('button[data-lever]').forEach(b => b.addEventListener('click', () => {
+    const L = BE_LEVERS[b.dataset.lever];
+    const v = parseFloat(b.dataset.value);
+    // round to the slider step so the control shows the value it was set to
+    L.set(state.inputs, Math.round(v * 100) / 100);
+    syncControls();
+    update();
+  }));
+}
+
+// ============================================================================
 // UPDATE LOOP
 // ============================================================================
 let raf = null;
@@ -1544,6 +1718,8 @@ function update() {
     if (derivedEl) derivedEl.textContent =
       `Resulting MFSP: $${d.base.toFixed(2)} base + $${d.ccsAdder.toFixed(2)} CCS = $${d.total.toFixed(2)}/gal`;
     refreshModified(false);
+    renderPresets();
+    renderBreakEven(results);
     renderTiles(results);
     renderCostChart(results);
     renderCarbonChart(results);
@@ -1631,6 +1807,7 @@ if ('ResizeObserver' in window) {
 // boot
 readHash();
 buildControls();
+buildPresets();
 syncControls();
 refreshModified(true);
 document.querySelectorAll('#metricSeg button').forEach(b =>
