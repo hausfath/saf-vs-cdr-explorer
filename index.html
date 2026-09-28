@@ -494,7 +494,8 @@
   <div id="ctlSaf" class="ctl-section"></div>
   <div id="ctlCdr" class="ctl-section"></div>
   <p class="scale-note">Sliders set the central (P50) estimate; each pathway's P10–P90 uncertainty
-     range scales proportionally with your value.</p>
+     range scales proportionally with your value. The SAF lifecycle GHG reduction sets the 45Z credit in
+     both accounting modes.</p>
 </aside>
 
 <main>
@@ -554,7 +555,7 @@
        MFSP (minimum fuel selling price) is feedstock-inclusive. Gallons per dry ton follow from mass yield
        (kg fuel / kg feedstock ÷ 0.8 kg/L ÷ 3.79 L/gal). Under full lifecycle accounting (default) each gallon avoids
        its lifecycle GHG reduction × 11.7 kg CO₂e, the CORSIA well-to-wake fossil jet baseline (89 gCO₂e/MJ); under
-       simple displacement it avoids the 9.75 kg CO₂ of fossil jet combustion (EIA).
+       simple displacement it avoids the full 11.7 kg, as if the SAF itself had zero lifecycle emissions.
        FT-SAF&nbsp;+&nbsp;CCS is not priced independently: its MFSP is the FT-SAF (ag/forest) cost plus the CCS cost
        slider applied to the ~0.018 tCO₂ stored per gallon (54% of biomass carbon exits as a concentrated CO₂
        stream during gasification, so capture is cheap; the cost is mostly compression, transport and storage,
@@ -577,10 +578,12 @@
        Its co-product revenue default ($130/tCO₂ ≈ $3.1/kg H₂) is a market price between gray and green hydrogen,
        independent of either credit.</p>
     <h3>Accounting toggles</h3>
-    <p><em>Simple displacement</em> credits SAF with the full combustion emissions of the jet fuel it replaces.
-       <em>Full lifecycle</em> multiplies SAF's benefit by its lifecycle GHG reduction (CORSIA-style, typically 50–85%),
-       applies 95% net-negativity to CDR storage, and credits CDR co-products (electricity, heat, hydrogen) with the
-       fossil emissions they displace.</p>
+    <p><em>Full lifecycle</em> (default) multiplies SAF's benefit by its lifecycle GHG reduction (CORSIA defaults,
+       55–91% depending on pathway), applies 95% net-negativity to CDR storage, and credits CDR co-products
+       (electricity, heat, hydrogen) with the fossil emissions they displace. <em>Simple displacement</em> is an
+       upper bound for SAF: each gallon is credited with the full well-to-wake emissions of the fossil jet it replaces,
+       as if producing the SAF emitted nothing, and CDR storage is counted gross. In both modes the lifecycle
+       reduction still sets the 45Z credit, which the law ties to the fuel's actual carbon intensity.</p>
     <h3>Caveats</h3>
     <p>Avoided ≠ removed: SAF benefits are counterfactual and shrink if aviation decarbonizes another way; CDR removals are
        permanent. Non-CO₂ effects are off by default; the <em>SAF non-CO₂ credit</em> slider adds them as a sensitivity.
@@ -607,7 +610,6 @@
 // ============================================================================
 const C = {
   CO2E_PER_DRY_TON: 0.5 * 3.667,
-  CO2_PER_GAL_FOSSIL_JET: 9.75,          // combustion only (EIA)
   JET_FUEL_DENSITY: 0.8,
   LITERS_PER_GALLON: 3.79,
   JET_LHV_MJ_PER_KG: 43.2,
@@ -617,7 +619,8 @@ const C = {
   NET_NEG: 0.95,
 };
 // Well-to-wake fossil jet emissions per gallon (~11.7 kg CO2e). Lifecycle
-// reductions are defined against this baseline, not the 9.75 kg combustion figure.
+// reductions are defined against this baseline (not the 9.75 kg combustion-only
+// figure). Simple displacement credits the full baseline, i.e. a zero-emission SAF.
 C.FOSSIL_JET_LCA_KG_PER_GAL = C.JET_FUEL_DENSITY * C.LITERS_PER_GALLON * C.JET_LHV_MJ_PER_KG * C.FOSSIL_JET_CI_G_PER_MJ / 1000.0;
 
 function saf45zCredit(ghgReduction, maxPerGal) {
@@ -631,9 +634,7 @@ function gallonsPerDryTon(massYield) {
 // o: { massYield, mfsp, jetPrice, credit, useLca, lcaRed, cdrEff, q45, nonCo2 }
 function safCosts(o) {
   const gal = gallonsPerDryTon(o.massYield);
-  const co2Avoided = o.useLca
-    ? gal * C.FOSSIL_JET_LCA_KG_PER_GAL * o.lcaRed / 1000.0
-    : gal * C.CO2_PER_GAL_FOSSIL_JET / 1000.0;
+  const co2Avoided = gal * C.FOSSIL_JET_LCA_KG_PER_GAL * (o.useLca ? o.lcaRed : 1) / 1000.0;
   const grossStored = C.CO2E_PER_DRY_TON * o.cdrEff;
   const co2Removed = grossStored * (o.useLca ? C.NET_NEG : 1);
   // optional non-CO2 (contrail) benefit, expressed as a fraction of the CO2 displacement benefit
@@ -1467,7 +1468,7 @@ function update() {
       METRIC_LABEL[state.metric] + ', central estimate with P10–P90 Monte Carlo range. ' +
       (state.inputs.useLca
         ? 'Full lifecycle accounting: SAF benefit reduced by lifecycle emissions.'
-        : 'Simple displacement accounting: SAF credited with full fossil-jet emissions.') +
+        : 'Simple displacement accounting (upper bound for SAF): each gallon credited with the full well-to-wake emissions of fossil jet.') +
       ' Dashed lines mark $50 and $200 social cost of carbon.';
     document.getElementById('carbonSub').textContent =
       'Where the 1.83 tCO₂e in each dry ton ends up, plus avoided fossil emissions beyond it. ' +

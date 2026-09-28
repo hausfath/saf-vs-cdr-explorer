@@ -26,7 +26,8 @@ assumption adjustable.
   co-product revenue
 - **Accounting basis**: full lifecycle (default; CORSIA lifecycle reductions against the
   89 gCO₂e/MJ well-to-wake fossil jet baseline, 95% net-negativity and co-product displacement
-  credit for CDR) vs simple displacement
+  credit for CDR) vs simple displacement (an upper bound for SAF: each gallon credited with the
+  full well-to-wake emissions of fossil jet). The lifecycle reduction sets the 45Z credit in both modes.
 
 Results update live: benchmark tiles (FT-SAF vs BECCS-electricity, the most common pathways
 today), a $/tCO₂ comparison chart with P10–P90 uncertainty ranges, a carbon-fate-per-dry-ton

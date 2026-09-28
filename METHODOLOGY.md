@@ -34,7 +34,7 @@ For SAF+CCS, the denominator includes **both** CO2 avoided (fuel displacement) a
 | Carbon content of oven-dry biomass | 0.50 tC/t | BiCRS Roadmap |
 | CO2:C molecular weight ratio | 3.667 (44/12) | Chemistry |
 | CO2e per dry ton of biomass | 1.833 tCO2 | Derived |
-| CO2 per gallon of fossil jet fuel (combustion) | 9.75 kg | EIA |
+| CO2 per gallon of fossil jet fuel (combustion only; reference, not used) | 9.75 kg | EIA |
 | Fossil jet well-to-wake baseline | 89 gCO2e/MJ ≈ 11.66 kg CO2e/gal | ICAO CORSIA (LHV 43.2 MJ/kg) |
 | Jet fuel density | 0.8 kg/L | Standard |
 | Liters per gallon | 3.79 | Standard |
@@ -61,7 +61,11 @@ For **SAF + CCS**, the MFSP is the FT-SAF MFSP plus the full CCS chain cost (com
 Two accounting bases are offered. **Full lifecycle is the default** (September 2026 onward).
 
 - **Full lifecycle (default):** each gallon of SAF avoids `lifecycle GHG reduction × 11.66 kg CO2e`, where 11.66 kg CO2e/gal is the ICAO CORSIA well-to-wake fossil jet baseline (89 gCO2e/MJ × 43.2 MJ/kg × 3.03 kg/gal). CDR storage (and the stored CO2 of FT-SAF+CCS) is multiplied by a 95% net-negativity factor, and CDR energy co-products are credited with the fossil emissions they displace in the per-dry-ton carbon chart.
-- **Simple displacement:** each gallon avoids the 9.75 kg CO2 released by burning fossil jet (EIA), with no upstream emissions on either side; CDR storage is gross.
+- **Simple displacement (upper bound for SAF):** each gallon avoids the full 11.66 kg CO2e well-to-wake emissions of the fossil jet it replaces, as if the SAF had zero lifecycle emissions; CDR storage is gross. SAF benefit is therefore always at least as large as under full lifecycle accounting.
+
+In both modes the lifecycle GHG reduction also sets the 45Z credit, because the statute ties the credit to the fuel's actual carbon intensity. Under simple displacement the lifecycle slider therefore still moves the net + subsidies cost (and the Monte Carlo range), but not the gross or net-of-revenue costs.
+
+*Changed 2026-09-28:* simple displacement previously credited only the 9.75 kg CO2 of fossil jet combustion. Because that omits fossil jet's upstream emissions (~16% of well-to-wake), high-reduction fuels such as FT-SAF (90%) came out *cheaper* under full lifecycle than under "simple" accounting (crossover at 9.75/11.66 = 83.6% reduction), contrary to the mode's description. At defaults the change lowers simple-mode FT-SAF from $353 to $295/tCO2; full-lifecycle results are unaffected.
 
 *Bug fixed September 2026:* earlier versions multiplied the lifecycle reduction by the 9.75 kg combustion-only figure, mixing a well-to-wake percentage with a combustion-only baseline. That understated SAF's lifecycle benefit by 16% (9.75 / 11.66) and overstated its $/tCO2 by ~19%.
 
@@ -394,15 +398,15 @@ Generated from the explorer defaults. P10–P90 are Monte Carlo percentiles of t
 | Biochar | CDR | $200 | $180 | $180 | $73 – $330 | 0.52 |
 | Biomass burial | CDR | $150 | $150 | $150 | $92 – $199 | 1.65 |
 
-**Simple displacement accounting:**
+**Simple displacement accounting (upper bound for SAF):**
 
 | Pathway | Type | Gross $/tCO₂ | Net $/tCO₂ | Net+Sub $/tCO₂ | P10–P90 (net+sub) | tCO₂ benefit/dry ton |
 |---|---|---|---|---|---|---|
-| FT-SAF (ag/forest waste) | SAF | $718 | $436 | $353 | $13 – $662 | 0.55 |
-| FT-SAF + CCS | SAF+CDR | $301 | $201 | $146 | $28 – $266 | 1.53 |
-| FT-SAF (switchgrass) | SAF | $769 | $487 | $423 | $92 – $723 | 0.55 |
-| HEFA (waste fats/oils) | SAF | $538 | $256 | $196 | $16 – $386 | 1.61 |
-| AtJ-SAF (ag/forest waste) | SAF | $923 | $641 | $606 | $182 – $911 | 0.39 |
+| FT-SAF (ag/forest waste) | SAF | $600 | $365 | $295 | $11 – $554 | 0.65 |
+| FT-SAF + CCS | SAF+CDR | $282 | $188 | $136 | $26 – $248 | 1.64 |
+| FT-SAF (switchgrass) | SAF | $643 | $407 | $354 | $77 – $605 | 0.65 |
+| HEFA (waste fats/oils) | SAF | $450 | $214 | $164 | $13 – $323 | 1.92 |
+| AtJ-SAF (ag/forest waste) | SAF | $772 | $536 | $507 | $152 – $762 | 0.46 |
 | BECCS (electricity) | CDR | $300 | $275 | $190 | $91 – $289 | 1.65 |
 | BECCS (heat) | CDR | $285 | $260 | $175 | $89 – $287 | 1.65 |
 | BECCS (hydrogen) | CDR | $300 | $170 | $85 | −$27 – $197 | 1.19 |
@@ -510,12 +514,14 @@ fixes: September 2026.*
 | Negative-zero axis tick label ("$-0"); gap between stored and released segments in lifecycle carbon chart | Display | — |
 | Unsupported superlatives in benchmark tiles ("most common", "leading") | Copy | — |
 
-Validation: restoring the pre-September parameters in the updated code reproduces the previous central values exactly (FT-SAF $365, HEFA $109, AtJ $580, FT switchgrass $426/tCO2, simple accounting); FT-SAF+CCS gives $188 versus $172 previously, the difference being the removed 45Z stack.
+Validation (2026-09-24, before simple displacement was redefined on 2026-09-28): restoring the pre-September parameters in the updated code reproduced the previous central values exactly (FT-SAF $365, HEFA $109, AtJ $580, FT switchgrass $426/tCO2, simple accounting); FT-SAF+CCS gave $188 versus $172 previously, the difference being the removed 45Z stack.
 
 **Parameter changes (SAF only):** jet price $2.50/$3.00/$3.50 → $2.10/$2.75/$4.00; lifecycle reductions to CORSIA 8th-edition defaults (FT 90%, switchgrass 80%, HEFA 78%, AtJ 65% central); HEFA MFSP $3.00/$4.50/$6.00 → $4.00/$5.25/$7.00; FT MFSP P90 $9 → $10 (switchgrass $10 → $10.50); CCS cost for FT-SAF+CCS $100/$150/$250 → $40/$70/$120; default accounting simple → full lifecycle. Waste-lipid supply and non-CO2 statements corrected (see caveats).
 
-**Effect on central net + subsidy costs ($/tCO2):** FT-SAF $365 → $328; FT-SAF+CCS $172 → $147; HEFA $109 → $210; AtJ $580 → $780; FT switchgrass $426 → $442 (old values simple accounting, new values full lifecycle). Sequential attribution for FT-SAF: lifecycle default (−$25 vs simple), jet price (+$26), CORSIA lifecycle values (−$38).
+**Effect on central net + subsidy costs ($/tCO2):** FT-SAF $365 → $328; FT-SAF+CCS $172 → $147; HEFA $109 → $210; AtJ $580 → $780; FT switchgrass $426 → $442 (old values simple accounting, new values full lifecycle). Sequential attribution for FT-SAF: lifecycle default (−$25 vs the combustion-only simple mode then in use), jet price (+$26), CORSIA lifecycle values (−$38).
 
 **External check:** El-Houjeiri et al. (2026) harmonize 16 waste/residue SAF studies to 2024 USD; their abatement-cost medians (before subsidies) are FT $342, HEFA $362 and AtJ $938/tCO2. The explorer's net-of-revenue lifecycle values are FT $405, HEFA $275 and AtJ $825.
+
+**2026-09-28 follow-up:** simple displacement redefined as a zero-emission-SAF upper bound (see Emissions Accounting); simple-mode table regenerated. Full-lifecycle defaults, article figures and break-evens unchanged.
 
 **Open items:** BECCS-H2 documentation used 52 kg H2/tCO2 while the code uses 50 kg H2 per dry ton (≈42 kg/tCO2 at 65% capture), so the $130/tCO2 co-product default implies ~$3.1/kg rather than $2.50/kg; CDR values were not changed pending review. The 53.7% FT carbon-capture share was not verified against a biomass-only primary source.
