@@ -13,7 +13,7 @@
     --surface: #fcfcfb;
     --ink: #14130f;
     --ink-2: #52514e;
-    --ink-3: #898781;
+    --ink-3: #6b6a65;
     --grid: #e1e0d9;
     --baseline: #c3c2b7;
     --border: rgba(11,11,11,0.10);
@@ -21,6 +21,9 @@
     --saf-soft: rgba(42,120,214,0.14);
     --cdr: #008300;
     --cdr-soft: rgba(0,131,0,0.12);
+    --hyb: #1baf7a;
+    --hyb-soft: rgba(27,175,122,0.16);
+    --hyb-ink: #13805a;
     --released: #e3e2da;
     --track: #e7e6df;
     --serif: "Charter", "Iowan Old Style", Georgia, serif;
@@ -39,6 +42,9 @@
     --saf-soft: rgba(57,135,229,0.20);
     --cdr: #009e00;
     --cdr-soft: rgba(0,158,0,0.16);
+    --hyb: #199e70;
+    --hyb-soft: rgba(25,158,112,0.20);
+    --hyb-ink: #3cc493;
     --released: #33332f;
     --track: #2c2c2a;
   }
@@ -104,22 +110,42 @@
   .masthead h1 .cdr-word { color: var(--cdr); }
   .masthead p {
     margin: 0;
-    max-width: 62ch;
+    max-width: 66ch;
     color: var(--ink-2);
     font-size: 15px;
   }
+  .masthead p.byline { margin-top: 8px; font-size: 12.5px; color: var(--ink-3); }
+  .masthead p.byline a { color: inherit; }
   .layout {
     max-width: 1240px;
     margin: 0 auto;
     padding: 20px 24px 60px;
     display: grid;
     grid-template-columns: 330px minmax(0, 1fr);
-    gap: 26px;
+    grid-template-areas:
+      "rail viewbar"
+      "rail tiles"
+      "rail cost"
+      "rail main";
+    grid-template-rows: auto auto auto 1fr;
+    column-gap: 26px;
     align-items: start;
   }
+  .layout > .viewbar { grid-area: viewbar; }
+  .layout > .tiles { grid-area: tiles; }
+  .layout > .cost-card { grid-area: cost; }
+  .layout > main { grid-area: main; }
+  .layout > aside.controls { grid-area: rail; }
+  /* narrow screens: headline results and the main chart come before the controls */
   @media (max-width: 900px) {
-    .layout { grid-template-columns: minmax(0, 1fr); }
-    aside.controls { position: static !important; max-height: none !important; }
+    .layout {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas: "viewbar" "tiles" "cost" "rail" "main";
+      grid-template-rows: none;
+      padding: 16px 16px 48px;
+    }
+    aside.controls { position: static !important; max-height: none !important; margin-bottom: 16px; }
+    .masthead { padding: 26px 16px 16px; }
   }
 
   /* ------- controls rail ------- */
@@ -168,6 +194,25 @@
     padding-bottom: 5px;
     border-bottom: 1px solid var(--grid);
   }
+  details.ctl-group { margin-top: 14px; border-top: 1px solid var(--grid); }
+  details.ctl-group > summary {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    font-weight: 600;
+    padding: 10px 0 4px;
+    cursor: pointer;
+  }
+  details.ctl-group > summary:hover { color: var(--ink); }
+  details.ctl-group > summary .swatch {
+    display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin: 0 6px 0 4px;
+  }
+  details.ctl-group > summary .count {
+    font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--ink-3); margin-left: 4px;
+  }
+  details.ctl-group > summary .count::before { content: "("; }
+  details.ctl-group > summary .count::after { content: ")"; }
   .ctl-section > h3 .swatch {
     display: inline-block;
     width: 9px; height: 9px;
@@ -333,6 +378,13 @@
     margin-top: 4px;
     line-height: 1.1;
   }
+  @media (max-width: 560px) {
+    .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .tile { padding: 10px 12px; }
+    .tile .t-value { font-size: 22px; }
+    .tile .t-sub { font-size: 11.5px; }
+  }
+  .tile .t-value .t-vs { font-size: 15px; font-weight: 500; color: var(--ink-3); margin: 0 2px; }
   .tile .t-sub {
     font-size: 12px;
     color: var(--ink-2);
@@ -359,7 +411,7 @@
     max-width: 70ch;
   }
   .chart-wrap { overflow-x: auto; }
-  .chart-wrap svg { display: block; width: 100%; height: auto; min-width: 620px; }
+  .chart-wrap svg { display: block; }
   .legend {
     display: flex;
     flex-wrap: wrap;
@@ -438,6 +490,7 @@
   }
   .type-pill.saf { background: var(--saf-soft); color: var(--saf); }
   .type-pill.cdr { background: var(--cdr-soft); color: var(--cdr); }
+  .type-pill.hyb { background: var(--hyb-soft); color: var(--hyb-ink); }
 
   .notes {
     font-size: 12.5px;
@@ -477,28 +530,15 @@
 
 <header class="masthead">
   <p class="kicker">Interactive analysis &middot; Biomass carbon economics</p>
-  <h1>One ton of waste biomass: make <span class="saf-word">jet fuel</span>, or <span class="cdr-word">remove carbon</span>?</h1>
-  <p>Sustainable aviation fuel and biomass carbon removal compete for the same limited feedstock.
-     This tool compares their cost per tonne of CO₂ benefit across 14 pathways. Adjust any assumption —
-     fuel production cost, jet fuel price, CDR cost, tax credits — and every result updates live.
-     Based on the analysis by Zeke Hausfather; uncertainty ranges are P10–P90 from a Monte Carlo simulation.</p>
+  <h1>One tonne of waste biomass: make <span class="saf-word">jet fuel</span>, or <span class="cdr-word">remove carbon</span>?</h1>
+  <p>Sustainable aviation fuel (SAF) and biomass carbon removal (CDR) compete for the same limited residues.
+     This tool compares what each costs per tonne of CO₂ benefit, and how much benefit each gets from a tonne of biomass.
+     Change any assumption and every result updates.</p>
+  <p class="byline">Analysis by Zeke Hausfather · Ranges are P10–P90 from a Monte Carlo simulation ·
+     <a href="https://github.com/hausfath/saf-vs-cdr-explorer/blob/main/METHODOLOGY.md">Methodology</a></p>
 </header>
 
 <div class="layout">
-<aside class="controls" aria-label="Model assumptions">
-  <div class="controls-head">
-    <h2>Assumptions</h2>
-    <button class="reset" id="resetBtn" title="Restore all assumptions to the study's central estimates">Reset all</button>
-  </div>
-  <div id="ctlGlobal" class="ctl-section"></div>
-  <div id="ctlSaf" class="ctl-section"></div>
-  <div id="ctlCdr" class="ctl-section"></div>
-  <p class="scale-note">Sliders set the central (P50) estimate; each pathway's P10–P90 uncertainty
-     range scales proportionally with your value. The SAF lifecycle GHG reduction sets the 45Z credit in
-     both accounting modes.</p>
-</aside>
-
-<main>
   <div class="viewbar" role="group" aria-label="View options">
     <span class="seg-label">Cost basis</span>
     <div class="seg" id="metricSeg">
@@ -517,22 +557,37 @@
 
   <section class="tiles" id="tiles" aria-label="Headline results"></section>
 
-  <section class="card">
+  <aside class="controls" aria-label="Model assumptions">
+    <div class="controls-head">
+      <h2>Assumptions</h2>
+      <button class="reset" id="resetBtn" title="Restore all assumptions to the central estimates">Reset all</button>
+    </div>
+    <div id="ctlKey" class="ctl-section"></div>
+    <div id="ctlPolicy" class="ctl-section"></div>
+    <details id="ctlSafMore" class="ctl-group"></details>
+    <details id="ctlCdr" class="ctl-group"></details>
+    <p class="scale-note">Sliders set the central (P50) estimate; each input's P10–P90 range scales
+       proportionally with your value.</p>
+  </aside>
+
+  <section class="card cost-card">
     <h2>Cost per tonne of CO₂</h2>
     <p class="card-sub" id="costSub"></p>
     <div class="chart-wrap"><svg id="costChart" role="img" aria-label="Bar chart of cost per tonne CO2 by pathway"></svg></div>
     <div class="legend">
       <span class="key"><i style="background:var(--saf)"></i> SAF (avoided emissions)</span>
+      <span class="key"><i style="background:var(--hyb)"></i> SAF + CCS (avoided + stored)</span>
       <span class="key"><i style="background:var(--cdr)"></i> CDR (removed CO₂)</span>
-      <span class="key"><i style="background:none;border-bottom:2px solid var(--baseline);height:0;border-radius:0"></i> P10–P90 range</span>
+      <span class="key"><i style="background:none;border-bottom:2px solid var(--ink-2);height:0;border-radius:0"></i> P10–P90 range</span>
       <span class="key"><i style="background:none;border-left:1px dashed var(--ink-3);width:0;border-radius:0"></i> Social cost of carbon $50 / $200</span>
     </div>
   </section>
 
+<main>
   <section class="card">
-    <h2>Carbon benefit per dry ton of biomass</h2>
+    <h2>Carbon benefit per dry tonne of biomass</h2>
     <p class="card-sub" id="carbonSub"></p>
-    <div class="chart-wrap"><svg id="carbonChart" role="img" aria-label="Stacked bar chart of carbon stored, avoided, and released per dry ton"></svg></div>
+    <div class="chart-wrap"><svg id="carbonChart" role="img" aria-label="Stacked bar chart of carbon stored, avoided, and released per dry tonne"></svg></div>
     <div class="legend">
       <span class="key"><i style="background:var(--cdr)"></i> CO₂ permanently stored</span>
       <span class="key"><i style="background:var(--saf)"></i> CO₂ avoided (fossil displacement)</span>
@@ -552,7 +607,7 @@
        For SAF the benefit is fossil jet fuel displaced; for CDR it is CO₂ permanently removed; FT-SAF&nbsp;+&nbsp;CCS earns both.</p>
     <h3>Cost formulas</h3>
     <p><strong>SAF:</strong> <code>(MFSP × gallons − jet fuel revenue − 45Z credit − 45Q on stored CO₂) ÷ tCO₂ benefit</code>.
-       MFSP (minimum fuel selling price) is feedstock-inclusive. Gallons per dry ton follow from mass yield
+       MFSP (minimum fuel selling price) is feedstock-inclusive. Gallons per dry tonne (1,000 kg) follow from mass yield
        (kg fuel / kg feedstock ÷ 0.8 kg/L ÷ 3.79 L/gal). Under full lifecycle accounting (default) each gallon avoids
        its lifecycle GHG reduction × 11.7 kg CO₂e, the CORSIA well-to-wake fossil jet baseline (89 gCO₂e/MJ); under
        simple displacement it avoids the full 11.7 kg, as if the SAF itself had zero lifecycle emissions.
@@ -561,9 +616,9 @@
        stream during gasification, so capture is cheap; the cost is mostly compression, transport and storage,
        default $70/t, P10–P90 $40–120).</p>
     <p><strong>CDR:</strong> <code>(total cost − co-product revenue − 45Q) ÷ tCO₂ removed</code>. Costs are feedstock-inclusive
-       and calibrated to actual offtake pricing. A dry ton of biomass holds 1.83 tCO₂e; removal = 1.83 × capture efficiency.</p>
+       and calibrated to actual offtake pricing. A dry tonne of biomass (50% carbon) holds 1.83 tCO₂e; removal = 1.83 × capture efficiency.</p>
     <h3>Subsidies</h3>
-    <p>The 45Q credit ($85/tCO₂ statutory) requires gaseous CO₂ capture — BECCS, WtE+CCS, and FT-SAF+CCS qualify; bio-oil,
+    <p>The 45Q credit ($85/tCO₂ statutory) requires gaseous CO₂ capture: BECCS, WtE+CCS, and FT-SAF+CCS qualify; bio-oil,
        biochar, burial, and injection do not. The 45Z Clean Fuel Production Credit (post-OBBBA: up to $1.00/gal with
        prevailing-wage compliance, through 2029; feedstock must come from the US, Canada or Mexico) is scaled by carbon
        intensity, <code>(50 − CI)/50</code>, with CI floored at zero. At the default lifecycle reductions it is worth
@@ -572,7 +627,7 @@
        election: 45Q on stored CO₂ (default, worth more) or 45Z alone with CCS counted in the fuel's CI.</p>
     <p>The 45V clean hydrogen production credit survived OBBBA but was shortened: facilities must begin construction
        before January 1, 2028 (previously 2033) to claim up to $3.00/kg for ten years. 45V and 45Q cannot be claimed
-       at the same facility (§45V(d)(2)), so the BECCS (hydrogen) pathway carries an election toggle — 45Q on stored
+       at the same facility (§45V(d)(2)), so the BECCS (hydrogen) pathway carries an election toggle: 45Q on stored
        CO₂ (default) or 45V on the hydrogen, worth ~$126/tCO₂ removed at the default 65% capture efficiency. Deeply
        carbon-negative biomass-gasification hydrogen readily meets the 0.45 kgCO₂e/kg threshold for the full rate.
        Its co-product revenue default ($130/tCO₂ ≈ $3.1/kg H₂) is a market price between gray and green hydrogen,
@@ -603,7 +658,7 @@
 
 <div id="tooltip" role="tooltip"></div>
 
-<script>
+<script id="model">
 'use strict';
 // ============================================================================
 // MODEL — faithful port of saf_vs_cdr_analysis.py
@@ -895,6 +950,10 @@ const METRIC_LABEL = {
   netWithSubsidy: 'Net cost with subsidies (45Q, 45Z, or 45V as applicable)',
 };
 
+</script>
+
+<script>
+'use strict';
 // ============================================================================
 // CONTROLS
 // ============================================================================
@@ -938,155 +997,123 @@ function registerControl(el, getter) {
 }
 
 function buildControls() {
-  const g = document.getElementById('ctlGlobal');
-  g.innerHTML = '<h3>Market &amp; policy</h3>';
-  const globals = [
-    { key: 'jet', label: 'Jet fuel price', unit: '$/gal', min: 1.0, max: 6.0, step: 0.05,
-      sub: 'Revenue earned by every gallon of SAF sold', value: () => state.inputs.jetPrice,
-      set: v => { state.inputs.jetPrice = v; } },
-    { key: 'z45', label: '45Z credit, max', unit: '$/gal', min: 0, max: 1.75, step: 0.05,
-      sub: 'Clean Fuel Production Credit ceiling; scaled by fuel CI. $1.00 = current law, $1.75 = pre-OBBBA SAF rate, $0 = expiry after 2029',
-      value: () => state.inputs.z45Max, set: v => { state.inputs.z45Max = v; } },
-    { key: 'q45', label: '45Q credit', unit: '$/tCO₂', min: 0, max: 180, step: 5, decimals: 0,
-      sub: 'For geologically stored CO₂ (BECCS, WtE+CCS, FT-SAF+CCS)',
-      value: () => state.inputs.q45, set: v => { state.inputs.q45 = v; } },
-    { key: 'nonco2', label: 'SAF non-CO₂ credit', unit: '% of CO₂', min: 0, max: 100, step: 5, decimals: 0,
-      sub: 'Sensitivity: extra benefit from fewer contrails (cleaner-burning fuel), as a share of the CO₂ displacement benefit. 0 = not credited (default)',
-      value: () => Math.round(state.inputs.nonCo2 * 100), set: v => { state.inputs.nonCo2 = v / 100; } },
-  ];
-  for (const def of globals) {
+  const slider = (def) => {
     const row = sliderRow({ ...def, value: def.value(), onChange: v => { def.set(v); update(); } });
-    g.appendChild(row);
     registerControl(row, def.value);
-  }
-
-  const s = document.getElementById('ctlSaf');
-  s.innerHTML = '<h3><span class="swatch" style="background:var(--saf)"></span>SAF production cost (MFSP)</h3>';
-  for (const sp of SAF_PATHWAYS) {
-    const block = document.createElement('div');
-    block.className = 'pathway-block';
-    let row;
-    if (sp.id === 'ftccs') {
-      // FT-SAF+CCS: cost is derived from FT-SAF base + a CCS cost slider
-      row = sliderRow({
-        key: 'ccscost', label: sp.short + ' — CCS cost', unit: '$/tCO₂', cls: 'saf',
-        min: 40, max: 400, step: 5, decimals: 0,
-        sub: 'Capture, transport &amp; storage per tCO₂ stored, added on top of the FT-SAF (ag/forest) cost above',
-        value: state.inputs.ccsCost,
-        onChange: v => { state.inputs.ccsCost = v; update(); },
-      });
-      registerControl(row, () => state.inputs.ccsCost);
-      const derived = document.createElement('div');
-      derived.className = 'sub';
-      derived.id = 'ftccsDerived';
-      derived.style.marginTop = '4px';
-      row.appendChild(derived);
-      const zc = document.createElement('div');
-      zc.setAttribute('role', 'radiogroup');
-      zc.setAttribute('aria-label', 'FT-SAF + CCS tax credit election');
-      zc.style.marginTop = '6px';
-      zc.innerHTML = `
-        <div class="sub" style="margin-bottom:4px">Tax credit election — 45Z is unavailable at a facility claiming 45Q (§45Z(d)(4)):</div>
-        <label class="radio-row"><input type="radio" name="ftccscredit" value="q45"> 45Q on stored CO₂ (no 45Z)</label>
-        <label class="radio-row"><input type="radio" name="ftccscredit" value="z45"> 45Z only, with CCS counted in fuel CI (capped at the 45Z max)</label>`;
-      zc.querySelectorAll('input').forEach(rb => rb.addEventListener('change', () => { state.inputs.ftccsCredit = rb.value; update(); }));
-      zc._sync = () => zc.querySelectorAll('input').forEach(rb => { rb.checked = rb.value === state.inputs.ftccsCredit; });
-      controlRegistry.push({ el: zc, getter: () => state.inputs.ftccsCredit });
-      row.appendChild(zc);
-    } else {
-      row = sliderRow({
-        key: 'mfsp-' + sp.id, label: sp.short, unit: '$/gal', cls: 'saf',
-        min: 1, max: 18, step: 0.05,
-        sub: sp.note + (sp.id === 'ft' ? '; also the base cost for FT-SAF + CCS' : ''),
-        value: state.inputs.mfsp[sp.id],
-        onChange: v => { state.inputs.mfsp[sp.id] = v; update(); },
-      });
-      registerControl(row, () => state.inputs.mfsp[sp.id]);
-    }
-    block.appendChild(row);
-
+    return row;
+  };
+  // per-pathway "More assumptions" disclosure for SAF (yield, lifecycle reduction)
+  const safAdvanced = (sp) => {
     const adv = document.createElement('details');
     adv.className = 'adv';
     adv.innerHTML = '<summary>More assumptions</summary>';
-    const yRow = sliderRow({
-      key: 'yield-' + sp.id, label: 'Mass yield', unit: 'kg/kg', cls: 'saf',
-      min: 0.04, max: 0.70, step: 0.005, decimals: 3,
-      value: state.inputs.massYield[sp.id],
-      onChange: v => { state.inputs.massYield[sp.id] = v; update(); },
-    });
-    registerControl(yRow, () => state.inputs.massYield[sp.id]);
-    const lRow = sliderRow({
-      key: 'lca-' + sp.id, label: 'Lifecycle GHG reduction', unit: 'fraction', cls: 'saf',
-      min: 0.30, max: 0.95, step: 0.01,
-      value: state.inputs.lcaRed[sp.id],
-      onChange: v => { state.inputs.lcaRed[sp.id] = v; update(); },
-    });
-    registerControl(lRow, () => state.inputs.lcaRed[sp.id]);
-    adv.append(yRow, lRow);
-    block.appendChild(adv);
-    s.appendChild(block);
-  }
+    adv.append(
+      slider({ key: 'yield-' + sp.id, label: 'Mass yield', unit: 'kg/kg', cls: 'saf', min: 0.04, max: 0.70, step: 0.005, decimals: 3,
+        value: () => state.inputs.massYield[sp.id], set: v => { state.inputs.massYield[sp.id] = v; } }),
+      slider({ key: 'lca-' + sp.id, label: 'Lifecycle GHG reduction', unit: 'fraction', cls: 'saf', min: 0.30, max: 0.95, step: 0.01,
+        sub: 'Also sets the 45Z credit, in both accounting modes',
+        value: () => state.inputs.lcaRed[sp.id], set: v => { state.inputs.lcaRed[sp.id] = v; } }));
+    return adv;
+  };
+  const block = (...children) => {
+    const b = document.createElement('div');
+    b.className = 'pathway-block';
+    b.append(...children);
+    return b;
+  };
+  const mfspSlider = (sp) => slider({
+    key: 'mfsp-' + sp.id, label: sp.id === 'ft' ? 'FT-SAF production cost' : sp.short, unit: '$/gal', cls: 'saf',
+    min: 1, max: 18, step: 0.05,
+    sub: sp.id === 'ft'
+      ? 'Minimum fuel selling price for Fischer-Tropsch SAF from residues. ~$4 = projected nth-of-a-kind; ~$9–10 = first-of-a-kind. Also the base cost for FT-SAF + CCS'
+      : sp.note,
+    value: () => state.inputs.mfsp[sp.id], set: v => { state.inputs.mfsp[sp.id] = v; } });
 
+  // ---- Key levers (always open)
+  const k = document.getElementById('ctlKey');
+  k.innerHTML = '<h3>Key levers</h3>';
+  const ft = SAF_PATHWAYS.find(p => p.id === 'ft');
+  const ftccs = SAF_PATHWAYS.find(p => p.id === 'ftccs');
+  k.appendChild(block(slider({ key: 'jet', label: 'Jet fuel price', unit: '$/gal', min: 1.0, max: 6.0, step: 0.05,
+    sub: 'US Gulf Coast: $2.11 in 2025, $4.38 in Sept 2026. Revenue earned by every gallon of SAF',
+    value: () => state.inputs.jetPrice, set: v => { state.inputs.jetPrice = v; } })));
+  k.appendChild(block(mfspSlider(ft), safAdvanced(ft)));
+
+  const ccsRow = slider({ key: 'ccscost', label: 'CCS cost for FT-SAF + CCS', unit: '$/tCO₂', cls: 'saf', min: 40, max: 400, step: 5, decimals: 0,
+    sub: 'Compression, transport &amp; storage per tCO₂ stored, added to the FT-SAF production cost',
+    value: () => state.inputs.ccsCost, set: v => { state.inputs.ccsCost = v; } });
+  const derived = document.createElement('div');
+  derived.className = 'sub';
+  derived.id = 'ftccsDerived';
+  derived.style.marginTop = '4px';
+  const zc = document.createElement('div');
+  zc.setAttribute('role', 'radiogroup');
+  zc.setAttribute('aria-label', 'FT-SAF + CCS tax credit election');
+  zc.style.marginTop = '6px';
+  zc.innerHTML = `
+    <div class="sub" style="margin-bottom:4px">Tax credit: a facility claiming 45Q cannot claim 45Z (§45Z(d)(4))</div>
+    <label class="radio-row"><input type="radio" name="ftccscredit" value="q45"> 45Q on stored CO₂</label>
+    <label class="radio-row"><input type="radio" name="ftccscredit" value="z45"> 45Z only, with CCS counted in fuel CI</label>`;
+  zc.querySelectorAll('input').forEach(rb => rb.addEventListener('change', () => { state.inputs.ftccsCredit = rb.value; update(); }));
+  zc._sync = () => zc.querySelectorAll('input').forEach(rb => { rb.checked = rb.value === state.inputs.ftccsCredit; });
+  controlRegistry.push({ el: zc, getter: () => state.inputs.ftccsCredit });
+  ccsRow.append(derived, zc);
+  k.appendChild(block(ccsRow, safAdvanced(ftccs)));
+
+  k.appendChild(block(slider({ key: 'nonco2', label: 'SAF non-CO₂ credit', unit: '% of CO₂', min: 0, max: 100, step: 5, decimals: 0,
+    sub: 'Extra benefit from fewer contrails, as a share of SAF’s CO₂ benefit. Literature: ~16–28% (GWP100) to ~46–78% (GWP*) for 100% SAF. Default 0',
+    value: () => Math.round(state.inputs.nonCo2 * 100), set: v => { state.inputs.nonCo2 = v / 100; } })));
+
+  // ---- Tax credits (open)
+  const pol = document.getElementById('ctlPolicy');
+  pol.innerHTML = '<h3>Tax credits</h3>';
+  pol.appendChild(slider({ key: 'z45', label: '45Z clean fuel credit, max', unit: '$/gal', min: 0, max: 1.75, step: 0.05,
+    sub: 'Scaled by fuel carbon intensity. $1.00 = current law; $1.75 = pre-2025 SAF rate; $0 = expiry after 2029',
+    value: () => state.inputs.z45Max, set: v => { state.inputs.z45Max = v; } }));
+  pol.appendChild(slider({ key: 'q45', label: '45Q carbon storage credit', unit: '$/tCO₂', min: 0, max: 180, step: 5, decimals: 0,
+    sub: 'For geologically stored CO₂ (BECCS, WtE + CCS, FT-SAF + CCS)',
+    value: () => state.inputs.q45, set: v => { state.inputs.q45 = v; } }));
+
+  // ---- Other SAF pathways (collapsed)
+  const s = document.getElementById('ctlSafMore');
+  s.innerHTML = '<summary><span class="swatch" style="background:var(--saf)"></span>Other SAF pathways <span class="count">3</span></summary>';
+  for (const sp of SAF_PATHWAYS.filter(p => p.id !== 'ft' && p.id !== 'ftccs')) s.appendChild(block(mfspSlider(sp), safAdvanced(sp)));
+
+  // ---- Carbon removal pathways (collapsed)
   const c = document.getElementById('ctlCdr');
-  c.innerHTML = '<h3><span class="swatch" style="background:var(--cdr)"></span>CDR total cost</h3>';
+  c.innerHTML = `<summary><span class="swatch" style="background:var(--cdr)"></span>Carbon removal costs <span class="count">${CDR_PATHWAYS.length}</span></summary>
+    <p class="sub" style="margin:6px 0 2px">Total cost per tonne removed before revenue and credits, calibrated to offtake pricing.</p>`;
   for (const cp of CDR_PATHWAYS) {
-    const block = document.createElement('div');
-    block.className = 'pathway-block';
-    const row = sliderRow({
-      key: 'cost-' + cp.id, label: cp.short, unit: '$/tCO₂', cls: 'cdr',
-      min: 40, max: 650, step: 5, decimals: 0,
+    const kids = [slider({ key: 'cost-' + cp.id, label: cp.short, unit: '$/tCO₂', cls: 'cdr', min: 40, max: 650, step: 5, decimals: 0,
       sub: cp.feedstock + (cp.has45q ? ' · 45Q-eligible' : ''),
-      value: state.inputs.cdrCost[cp.id],
-      onChange: v => { state.inputs.cdrCost[cp.id] = v; update(); },
-    });
-    registerControl(row, () => state.inputs.cdrCost[cp.id]);
-    block.appendChild(row);
-
+      value: () => state.inputs.cdrCost[cp.id], set: v => { state.inputs.cdrCost[cp.id] = v; } })];
     if (cp.id === 'beccsH2') {
       const elect = document.createElement('div');
       elect.className = 'ctl cdr';
       elect.setAttribute('role', 'radiogroup');
       elect.setAttribute('aria-label', 'Hydrogen tax credit election');
       elect.innerHTML = `
-        <div class="sub" style="margin-bottom:4px">Tax credit election — facilities cannot claim both (§45V(d)(2)):</div>
-        <label class="radio-row"><input type="radio" name="h2credit" value="q45"> 45Q on stored CO₂ (uses slider above)</label>
-        <label class="radio-row"><input type="radio" name="h2credit" value="v45"> 45V on hydrogen ($3/kg; needs construction start before 2028)</label>`;
+        <div class="sub" style="margin-bottom:4px">Tax credit: facilities cannot claim both 45Q and 45V (§45V(d)(2))</div>
+        <label class="radio-row"><input type="radio" name="h2credit" value="q45"> 45Q on stored CO₂</label>
+        <label class="radio-row"><input type="radio" name="h2credit" value="v45"> 45V on hydrogen ($3/kg; construction before 2028)</label>`;
       elect.querySelectorAll('input[name=h2credit]').forEach(rb => {
         rb.addEventListener('change', () => { state.inputs.h2Credit = rb.value; update(); });
       });
-      elect._sync = () => {
-        elect.querySelectorAll('input[name=h2credit]').forEach(rb => {
-          rb.checked = rb.value === state.inputs.h2Credit;
-        });
-      };
-      elect._sync();
+      elect._sync = () => elect.querySelectorAll('input[name=h2credit]').forEach(rb => { rb.checked = rb.value === state.inputs.h2Credit; });
       controlRegistry.push({ el: elect, getter: () => state.inputs.h2Credit });
-      block.appendChild(elect);
+      kids.push(elect);
     }
-
     const adv = document.createElement('details');
     adv.className = 'adv';
     adv.innerHTML = '<summary>More assumptions</summary>';
-    const eRow = sliderRow({
-      key: 'eff-' + cp.id, label: 'Capture efficiency', unit: 'fraction', cls: 'cdr',
-      min: 0.10, max: 0.98, step: 0.01,
-      value: state.inputs.cdrEff[cp.id],
-      onChange: v => { state.inputs.cdrEff[cp.id] = v; update(); },
-    });
-    registerControl(eRow, () => state.inputs.cdrEff[cp.id]);
-    const rRow = sliderRow({
-      key: 'rev-' + cp.id, label: 'Co-product revenue (' + cp.coproduct + ')', unit: '$/tCO₂', cls: 'cdr',
-      min: 0, max: 250, step: 1, decimals: 0,
-      sub: cp.id === 'beccsH2'
-        ? 'Default $130/tCO₂ ≈ $3.1/kg H₂ implied — a clean-H₂ premium between gray (~$1–2/kg) and green (~$4.50+/kg)'
-        : undefined,
-      value: state.inputs.cdrRev[cp.id],
-      onChange: v => { state.inputs.cdrRev[cp.id] = v; update(); },
-    });
-    registerControl(rRow, () => state.inputs.cdrRev[cp.id]);
-    adv.append(eRow, rRow);
-    block.appendChild(adv);
-    c.appendChild(block);
+    adv.append(
+      slider({ key: 'eff-' + cp.id, label: 'Capture efficiency', unit: 'fraction', cls: 'cdr', min: 0.10, max: 0.98, step: 0.01,
+        value: () => state.inputs.cdrEff[cp.id], set: v => { state.inputs.cdrEff[cp.id] = v; } }),
+      slider({ key: 'rev-' + cp.id, label: 'Co-product revenue (' + cp.coproduct + ')', unit: '$/tCO₂', cls: 'cdr', min: 0, max: 250, step: 1, decimals: 0,
+        sub: cp.id === 'beccsH2' ? 'Default $130/tCO₂ ≈ $3.1/kg H₂, a clean-H₂ premium between gray (~$1–2/kg) and green (~$4.50+/kg)' : undefined,
+        value: () => state.inputs.cdrRev[cp.id], set: v => { state.inputs.cdrRev[cp.id] = v; } }));
+    kids.push(adv);
+    c.appendChild(block(...kids));
   }
 }
 
@@ -1159,10 +1186,10 @@ function groupedRows(results) {
   const byId = Object.fromEntries(results.map(r => [r.def.id, r]));
   const pick = ids => ids.map(id => byId[id]);
   return [
-    { label: 'Cellulosic feedstocks — SAF', rows: pick(['ft', 'ftccs', 'ftsw', 'atj']) },
-    { label: 'Cellulosic feedstocks — CDR', rows: pick(['beccsE', 'beccsH', 'beccsH2', 'biooil', 'biochar']) },
+    { label: 'Cellulosic residues: SAF', rows: pick(['ft', 'ftccs', 'ftsw', 'atj']) },
+    { label: 'Cellulosic residues: carbon removal', rows: pick(['beccsE', 'beccsH', 'beccsH2', 'biooil', 'biochar']) },
     { label: 'Lipid feedstocks', rows: pick(['hefa', 'biooilHtl']) },
-    { label: 'Other feedstocks — CDR', rows: pick(['wte', 'injection', 'burial']) },
+    { label: 'Other feedstocks: carbon removal', rows: pick(['wte', 'injection', 'burial']) },
   ];
 }
 
@@ -1178,7 +1205,7 @@ function tipForResult(r, metric) {
     return `<h4>${esc(r.def.name)}</h4>
       <table>${rows.map(x => `<tr><td>${x[0]}</td><td>${x[1]}</td></tr>`).join('')}
       <tr class="total"><td>Net + subsidies</td><td>${fmt$(m.netWithSubsidy)}/tCO₂</td></tr></table>
-      <div class="muted" style="margin-top:6px">${m.gallons.toFixed(0)} gal/dry ton · ${m.co2Total.toFixed(2)} tCO₂ benefit/dry ton
+      <div class="muted" style="margin-top:6px">${m.gallons.toFixed(0)} gal per dry tonne · ${m.co2Total.toFixed(2)} tCO₂e benefit per dry tonne
       ${m.co2Removed > 0 ? `(${m.co2Avoided.toFixed(2)} avoided + ${m.co2Removed.toFixed(2)} stored)` : ''}${m.nonCo2 > 0 ? ` incl. ${m.nonCo2.toFixed(2)} non-CO₂ credit` : ''}</div>
       <div class="muted">P10–P90: ${fmt$(r.p10[metric])} – ${fmt$(r.p90[metric])}</div>`;
   }
@@ -1190,8 +1217,18 @@ function tipForResult(r, metric) {
   return `<h4>${esc(r.def.name)}</h4>
     <table>${rows.map(x => `<tr><td>${x[0]}</td><td>${x[1]}</td></tr>`).join('')}
     <tr class="total"><td>Net + subsidies</td><td>${fmt$(r.mid.netWithSubsidy)}/tCO₂</td></tr></table>
-    <div class="muted" style="margin-top:6px">${(C.CO2E_PER_DRY_TON * r.effMid).toFixed(2)} tCO₂ removed/dry ton (${Math.round(r.effMid * 100)}% capture)</div>
+    <div class="muted" style="margin-top:6px">${(C.CO2E_PER_DRY_TON * r.effMid).toFixed(2)} tCO₂ removed per dry tonne (${Math.round(r.effMid * 100)}% capture)</div>
     <div class="muted">P10–P90: ${fmt$(r.p10[metric])} – ${fmt$(r.p90[metric])}</div>`;
+}
+
+// Charts are drawn at the container's real pixel width so text stays legible on phones.
+function chartWidth(svg) {
+  const w = svg.parentElement.clientWidth || 900;
+  return Math.max(300, Math.round(w));
+}
+function colorFor(r) {
+  if (r.type !== 'SAF') return 'var(--cdr)';
+  return r.def.cdrEff > 0 ? 'var(--hyb)' : 'var(--saf)';
 }
 
 function renderCostChart(results) {
@@ -1200,9 +1237,11 @@ function renderCostChart(results) {
   const metric = state.metric;
   const groups = groupedRows(results);
 
-  const rowH = 30, headerH = 26, gapAfterGroup = 10;
-  const ml = 172, mr = 64, mt = 8, mb = 30;
-  const W = 900;
+  const W = chartWidth(svg);
+  const narrow = W < 560;
+  const rowH = narrow ? 28 : 30, headerH = 26, gapAfterGroup = 10;
+  const ml = narrow ? 128 : 172, mr = narrow ? 46 : 64, mt = 8, mb = 30;
+  const fs = narrow ? 11.5 : 12;
   let y = mt;
   const layout = [];
   for (const g of groups) {
@@ -1213,67 +1252,74 @@ function renderCostChart(results) {
   }
   const H = y + mb;
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('width', W);
+  svg.setAttribute('height', H);
 
-  // domain
-  let lo = 0, hi = 0;
+  // domain; the upper end is capped so one very wide whisker cannot squeeze every other bar
+  let lo = 0, hi = 0, maxMid = 0;
   for (const r of results) {
     lo = Math.min(lo, r.mid[metric], state.showWhiskers ? r.p10[metric] : r.mid[metric]);
     hi = Math.max(hi, r.mid[metric], state.showWhiskers ? r.p90[metric] : r.mid[metric]);
+    maxMid = Math.max(maxMid, r.mid[metric]);
   }
+  hi = Math.min(hi, Math.max(maxMid * 1.3, 400));
   hi = Math.max(hi, 220); // keep SCC lines visible
   const span = hi - lo || 1;
-  lo -= span * 0.02; hi += span * 0.09;
-  const x = v => ml + (v - lo) / (hi - lo) * (W - ml - mr);
+  lo -= span * 0.02; hi += span * 0.06;
+  const x = v => ml + (Math.min(v, hi) - lo) / (hi - lo) * (W - ml - mr);
 
   // gridlines + axis
-  for (const t of niceTicks(lo, hi, 6)) {
-    el('line', { x1: x(t), x2: x(t), y1: mt, y2: H - mb, stroke: 'var(--grid)', 'stroke-width': 1 }, svg);
-    el('text', { x: x(t), y: H - mb + 16, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--ink-3)' }, svg)
-      .textContent = fmt$(Math.abs(t) < 1e-9 ? 0 : t);
+  for (const tk of niceTicks(lo, hi, narrow ? 4 : 6)) {
+    el('line', { x1: x(tk), x2: x(tk), y1: mt, y2: H - mb, stroke: 'var(--grid)', 'stroke-width': 1 }, svg);
+    el('text', { x: x(tk), y: H - mb + 16, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--ink-3)' }, svg)
+      .textContent = fmt$(Math.abs(tk) < 1e-9 ? 0 : tk);
   }
   // SCC reference lines
   for (const scc of [50, 200]) {
     if (scc > lo && scc < hi) {
       el('line', { x1: x(scc), x2: x(scc), y1: mt, y2: H - mb, stroke: 'var(--ink-3)', 'stroke-width': 1, 'stroke-dasharray': '3,4', opacity: 0.7 }, svg);
-      el('text', { x: x(scc) + 3, y: mt + 9, 'font-size': 9.5, fill: 'var(--ink-3)' }, svg).textContent = 'SCC $' + scc;
+      if (!narrow) el('text', { x: x(scc) + 3, y: mt + 9, 'font-size': 10, fill: 'var(--ink-3)' }, svg).textContent = 'SCC $' + scc;
     }
   }
   // zero baseline
   el('line', { x1: x(0), x2: x(0), y1: mt, y2: H - mb, stroke: 'var(--baseline)', 'stroke-width': 1.2 }, svg);
-  el('text', { x: W - mr + 4, y: H - mb + 16, 'font-size': 10.5, fill: 'var(--ink-3)' }, svg).textContent = '$/tCO₂';
+  el('text', { x: W - 2, y: H - 2, 'text-anchor': 'end', 'font-size': 10.5, fill: 'var(--ink-3)' }, svg).textContent = '$ per tCO₂e';
 
   for (const item of layout) {
     if (item.header) {
-      const t = el('text', { x: 2, y: item.y + headerH - 9, 'font-size': 11, fill: 'var(--ink-2)', 'font-weight': 600, 'font-style': 'italic' }, svg);
-      t.textContent = item.header;
+      const hd = el('text', { x: 2, y: item.y + headerH - 9, 'font-size': 11, fill: 'var(--ink-2)', 'font-weight': 600, 'font-style': 'italic', 'paint-order': 'stroke', stroke: 'var(--surface)', 'stroke-width': 4 }, svg);
+      hd.textContent = item.header;
       continue;
     }
     const r = item.r;
     const val = r.mid[metric];
     const barH = 18;
     const by = item.y + (rowH - barH) / 2;
-    const color = r.type === 'SAF' ? 'var(--saf)' : 'var(--cdr)';
 
-    const gEl = el('g', { class: 'bar-hit', role: 'img', 'aria-label': `${r.def.name}: ${fmt$(val)} per tonne CO2` }, svg);
-    // row label
-    const lbl = el('text', { x: ml - 8, y: by + barH / 2 + 4, 'text-anchor': 'end', 'font-size': 12, fill: 'var(--ink)' }, gEl);
-    lbl.textContent = r.def.short;
-    // bar
-    el('path', { d: barPath(x(0), x(val), by, barH), fill: color, class: 'bar-main' }, gEl);
-    // whiskers (P10–P90)
+    const gEl = el('g', { class: 'bar-hit', role: 'img', 'aria-label': `${r.def.name}: ${fmt$(val)} per tonne CO2e` }, svg);
+    el('text', { x: ml - 8, y: by + barH / 2 + 4, 'text-anchor': 'end', 'font-size': fs, fill: 'var(--ink)' }, gEl)
+      .textContent = r.def.short;
+    el('path', { d: barPath(x(0), x(val), by, barH), fill: colorFor(r), class: 'bar-main' }, gEl);
+    let tipX = x(val);
     if (state.showWhiskers) {
       const cy = by + barH / 2;
       const xa = x(r.p10[metric]), xb = x(r.p90[metric]);
+      const clipped = r.p90[metric] > hi;
       el('line', { x1: xa, x2: xb, y1: cy, y2: cy, stroke: 'var(--ink-2)', 'stroke-width': 1.3, opacity: 0.85 }, gEl);
-      for (const xx of [xa, xb])
-        el('line', { x1: xx, x2: xx, y1: cy - 4, y2: cy + 4, stroke: 'var(--ink-2)', 'stroke-width': 1.3, opacity: 0.85 }, gEl);
+      el('line', { x1: xa, x2: xa, y1: cy - 4, y2: cy + 4, stroke: 'var(--ink-2)', 'stroke-width': 1.3, opacity: 0.85 }, gEl);
+      if (clipped) {
+        // whisker runs off-scale: arrowhead instead of an end cap
+        el('path', { d: `M${xb - 6},${cy - 4} L${xb},${cy} L${xb - 6},${cy + 4}`, fill: 'none', stroke: 'var(--ink-2)', 'stroke-width': 1.3 }, gEl);
+      } else {
+        el('line', { x1: xb, x2: xb, y1: cy - 4, y2: cy + 4, stroke: 'var(--ink-2)', 'stroke-width': 1.3, opacity: 0.85 }, gEl);
+      }
+      tipX = Math.max(x(val), xb);
     }
-    // value label at the tip (outside bar, past whisker end)
-    const tipX = state.showWhiskers ? Math.max(x(val), x(r.p90[metric])) : x(val);
-    el('text', { x: tipX + 7, y: by + barH / 2 + 4, 'font-size': 11.5, 'font-weight': 600, fill: 'var(--ink)', style: 'font-variant-numeric:tabular-nums' }, gEl)
+    // value label past the bar/whisker end; if that would overflow, place it just inside the right edge
+    const labelX = Math.min(tipX + 7, W - 44);
+    el('text', { x: labelX, y: by + barH / 2 + 4, 'font-size': 11.5, 'font-weight': 600, fill: 'var(--ink)', style: 'font-variant-numeric:tabular-nums', 'paint-order': 'stroke', stroke: 'var(--surface)', 'stroke-width': 3 }, gEl)
       .textContent = fmt$(val);
-    // invisible hit rect spanning the row
-    const hit = el('rect', { x: 0, y: item.y, width: W, height: rowH, fill: 'transparent' }, gEl);
+    el('rect', { x: 0, y: item.y, width: W, height: rowH, fill: 'transparent' }, gEl);
     attachTip(gEl, () => tipForResult(r, metric));
   }
 }
@@ -1289,9 +1335,14 @@ function renderCarbonChart(results) {
   const ids = ['ft', 'ftccs', 'ftsw', 'atj', 'beccsE', 'beccsH', 'beccsH2', 'biooil', 'biochar', 'burial'];
   const rows = ids.map(id => byId[id]);
 
-  const rowH = 30, ml = 172, mr = 60, mt = 22, mb = 30, W = 900;
+  const W = chartWidth(svg);
+  const narrow = W < 560;
+  const rowH = narrow ? 28 : 30, ml = narrow ? 128 : 172, mr = narrow ? 40 : 60, mt = 22, mb = 30;
+  const fs = narrow ? 11.5 : 12;
   const H = mt + rows.length * rowH + mb;
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('width', W);
+  svg.setAttribute('height', H);
 
   // compute segments per row
   const segRows = rows.map(r => {
@@ -1311,16 +1362,16 @@ function renderCarbonChart(results) {
   const maxX = Math.max(C.CO2E_PER_DRY_TON, ...segRows.map(s => C.CO2E_PER_DRY_TON + s.avoided)) * 1.10;
   const x = v => ml + v / maxX * (W - ml - mr);
 
-  for (const t of niceTicks(0, maxX, 6)) {
-    el('line', { x1: x(t), x2: x(t), y1: mt, y2: H - mb, stroke: 'var(--grid)', 'stroke-width': 1 }, svg);
-    el('text', { x: x(t), y: H - mb + 16, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--ink-3)' }, svg)
-      .textContent = t.toFixed(1);
+  for (const tk of niceTicks(0, maxX, narrow ? 4 : 6)) {
+    el('line', { x1: x(tk), x2: x(tk), y1: mt, y2: H - mb, stroke: 'var(--grid)', 'stroke-width': 1 }, svg);
+    el('text', { x: x(tk), y: H - mb + 16, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--ink-3)' }, svg)
+      .textContent = tk.toFixed(1);
   }
-  el('text', { x: W - mr + 4, y: H - mb + 16, 'font-size': 10.5, fill: 'var(--ink-3)' }, svg).textContent = 'tCO₂/dt';
+  el('text', { x: W - 2, y: H - 2, 'text-anchor': 'end', 'font-size': 10.5, fill: 'var(--ink-3)' }, svg).textContent = 'tCO₂e per dry tonne';
   // biomass carbon reference
   el('line', { x1: x(C.CO2E_PER_DRY_TON), x2: x(C.CO2E_PER_DRY_TON), y1: mt - 6, y2: H - mb, stroke: 'var(--ink-2)', 'stroke-width': 1, 'stroke-dasharray': '3,4' }, svg);
-  el('text', { x: x(C.CO2E_PER_DRY_TON), y: mt - 9, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--ink-2)' }, svg)
-    .textContent = `all carbon in one dry ton = ${C.CO2E_PER_DRY_TON.toFixed(2)} tCO₂e`;
+  el('text', { x: x(C.CO2E_PER_DRY_TON), y: mt - 9, 'text-anchor': narrow ? 'end' : 'middle', 'font-size': 10.5, fill: 'var(--ink-2)' }, svg)
+    .textContent = narrow ? `all biomass carbon = ${C.CO2E_PER_DRY_TON.toFixed(2)}` : `all carbon in one dry tonne = ${C.CO2E_PER_DRY_TON.toFixed(2)} tCO₂e`;
   el('line', { x1: x(0), x2: x(0), y1: mt, y2: H - mb, stroke: 'var(--baseline)', 'stroke-width': 1.2 }, svg);
 
   const GAP = 2;
@@ -1328,7 +1379,7 @@ function renderCarbonChart(results) {
     const by = mt + i * rowH + (rowH - 18) / 2;
     const barH = 18;
     const gEl = el('g', { class: 'bar-hit' }, svg);
-    el('text', { x: ml - 8, y: by + barH / 2 + 4, 'text-anchor': 'end', 'font-size': 12, fill: 'var(--ink)' }, gEl)
+    el('text', { x: ml - 8, y: by + barH / 2 + 4, 'text-anchor': 'end', 'font-size': fs, fill: 'var(--ink)' }, gEl)
       .textContent = s.r.def.short;
 
     // segments: stored | released (to 1.833) | avoided beyond
@@ -1353,7 +1404,7 @@ function renderCarbonChart(results) {
       <tr><td>CO₂ stored${useLca ? ' (net of 95% negativity)' : ''}</td><td>${s.stored.toFixed(2)}</td></tr>
       <tr><td>CO₂ avoided${useLca && s.r.type === 'SAF' ? ' (lifecycle-adjusted)' : ''}${s.r.type === 'SAF' && s.r.mid.nonCo2 > 0 ? ' incl. non-CO₂ credit' : ''}</td><td>${s.avoided.toFixed(2)}</td></tr>
       <tr><td>CO₂ released</td><td>${s.released.toFixed(2)}</td></tr>
-      <tr class="total"><td>Total climate benefit</td><td>${s.total.toFixed(2)} tCO₂/dt</td></tr></table>`);
+      <tr class="total"><td>Total climate benefit</td><td>${s.total.toFixed(2)} tCO₂e per dry tonne</td></tr></table>`);
   });
 }
 
@@ -1365,33 +1416,34 @@ function cdrBenefitPerDt(r, useLca) {
   return C.CO2E_PER_DRY_TON * r.effMid * (useLca ? C.NET_NEG : 1) + (useLca ? r.def.avoidedPerDt : 0);
 }
 function renderTiles(results) {
-  // Benchmarks are the most common pathways today, not the cheapest options:
+  // Benchmarks are two established routes on the same residues, not the cheapest options:
   // FT-SAF (ag/forest waste) for SAF, BECCS (electricity) for CDR.
   const metric = state.metric;
   const saf = results.find(r => r.def.id === 'ft');
   const cdr = results.find(r => r.def.id === 'beccsE');
   const gap = saf.mid[metric] - cdr.mid[metric];
-
-  const useLca = state.inputs.useLca;
-  const cdrCarbon = cdrBenefitPerDt(cdr, useLca);
-  const ratio = cdrCarbon / saf.mid.co2Total;
+  const safBenefit = saf.mid.co2Total;
+  const cdrBenefit = cdrBenefitPerDt(cdr, state.inputs.useLca);
+  const ratio = cdrBenefit / safBenefit;
+  const basis = { gross: 'gross cost', net: 'net of revenues', netWithSubsidy: 'net of revenues and credits' }[metric];
 
   const tiles = [
-    { label: 'SAF benchmark', dot: 'var(--saf)', value: fmt$(saf.mid[metric]) + '/t',
-      sub: 'FT-SAF (ag/forest waste), a cellulosic route that uses the same residues as BiCRS' },
-    { label: 'CDR benchmark', dot: 'var(--cdr)', value: fmt$(cdr.mid[metric]) + '/t',
-      sub: 'BECCS (electricity), an established BiCRS pathway on the same feedstock' },
-    { label: 'Cost gap, same biomass', dot: null,
-      value: (gap >= 0 ? '+' : '−') + fmt$(Math.abs(gap)),
-      sub: gap >= 0 ? 'BECCS (electricity) is cheaper per tCO₂ than FT-SAF' : 'FT-SAF is cheaper per tCO₂ than BECCS (electricity)' },
-    { label: 'CDR carbon leverage', dot: null, value: ratio.toFixed(1) + '×',
-      sub: 'BECCS (electricity) benefit per dry ton vs FT-SAF' },
+    { label: 'FT-SAF', dot: 'var(--saf)', value: fmt$(saf.mid[metric]) + '/t',
+      sub: `Per tCO₂e avoided, ${basis}. Fischer-Tropsch fuel from residues` },
+    { label: 'BECCS (electricity)', dot: 'var(--cdr)', value: fmt$(cdr.mid[metric]) + '/t',
+      sub: `Per tCO₂ removed, ${basis}. Carbon removal on the same residues` },
+    Math.abs(gap) < 5
+      ? { label: 'Cheaper per tonne', value: 'About equal', sub: 'The two benchmarks are within $5/t of each other' }
+      : { label: (gap > 0 ? 'BECCS' : 'FT-SAF') + ' is cheaper by', value: fmt$(Math.abs(gap)) + '/t',
+          sub: 'Difference in cost per tonne of CO₂e benefit' },
+    { label: 'Benefit per tonne of biomass', value: `${cdrBenefit.toFixed(2)} <span class="t-vs">vs</span> ${safBenefit.toFixed(2)}`,
+      sub: `tCO₂e, BECCS vs FT-SAF: ${ratio >= 1 ? ratio.toFixed(1) + '× more from BECCS' : (1 / ratio).toFixed(1) + '× more from FT-SAF'}` },
   ];
-  document.getElementById('tiles').innerHTML = tiles.map(t => `
+  document.getElementById('tiles').innerHTML = tiles.map(tl => `
     <div class="tile">
-      <div class="t-label">${t.dot ? `<span class="dot" style="background:${t.dot}"></span>` : ''}${t.label}</div>
-      <div class="t-value">${t.value}</div>
-      <div class="t-sub">${esc(t.sub)}</div>
+      <div class="t-label">${tl.dot ? `<span class="dot" style="background:${tl.dot}"></span>` : ''}${esc(tl.label)}</div>
+      <div class="t-value">${tl.value}</div>
+      <div class="t-sub">${esc(tl.sub)}</div>
     </div>`).join('');
 }
 
@@ -1401,12 +1453,12 @@ function renderTable(results) {
   let html = `<thead><tr>
     <th>Pathway</th><th>Gross</th><th>Net</th><th>Net + subsidies</th>
     <th>P10–P90 (${metric === 'gross' ? 'gross' : metric === 'net' ? 'net' : 'net+sub'})</th>
-    <th>tCO₂ benefit / dry ton</th></tr></thead><tbody>`;
+    <th>tCO₂e benefit per dry tonne</th></tr></thead><tbody>`;
   for (const g of groups) {
     for (const r of g.rows) {
       const co2 = r.type === 'SAF' ? r.mid.co2Total : cdrBenefitPerDt(r, state.inputs.useLca);
       html += `<tr>
-        <td>${esc(r.def.name)}<span class="type-pill ${r.type === 'SAF' ? 'saf' : 'cdr'}">${r.type === 'SAF' && r.def.cdrEff > 0 ? 'SAF+CDR' : r.type}</span></td>
+        <td>${esc(r.def.name)}<span class="type-pill ${r.type === 'SAF' ? (r.def.cdrEff > 0 ? 'hyb' : 'saf') : 'cdr'}">${r.type === 'SAF' && r.def.cdrEff > 0 ? 'SAF+CDR' : r.type}</span></td>
         <td>${fmt$(r.mid.gross)}</td>
         <td>${fmt$(r.mid.net)}</td>
         <td>${fmt$(r.mid.netWithSubsidy)}</td>
@@ -1471,7 +1523,7 @@ function update() {
         : 'Simple displacement accounting (upper bound for SAF): each gallon credited with the full well-to-wake emissions of fossil jet.') +
       ' Dashed lines mark $50 and $200 social cost of carbon.';
     document.getElementById('carbonSub').textContent =
-      'Where the 1.83 tCO₂e in each dry ton ends up, plus avoided fossil emissions beyond it. ' +
+      'Where the 1.83 tCO₂e in each dry tonne (1,000 kg) of biomass ends up, plus avoided fossil emissions beyond it. ' +
       (state.inputs.useLca
         ? 'Full accounting: storage at 95% net-negativity, SAF avoidance lifecycle-adjusted, CDR co-product displacement credited.'
         : 'Simple accounting: gross storage and full displacement credit.') +
@@ -1513,7 +1565,7 @@ document.getElementById('copyBtn').addEventListener('click', async e => {
     e.target.textContent = 'Link copied';
     setTimeout(() => { e.target.textContent = 'Copy scenario link'; }, 1600);
   } catch (err) {
-    e.target.textContent = 'Copy failed — copy the URL bar';
+    e.target.textContent = 'Copy failed: copy the URL bar';
   }
 });
 
@@ -1534,6 +1586,15 @@ document.getElementById('copyBtn').addEventListener('click', async e => {
     try { localStorage.setItem('saf_theme', next); } catch (e) { /* sandboxed */ }
   });
 })();
+
+// re-render charts at the new width when the layout changes size
+if ('ResizeObserver' in window) {
+  let lastW = 0;
+  new ResizeObserver(entries => {
+    const w = Math.round(entries[0].contentRect.width);
+    if (w !== lastW) { lastW = w; update(); }
+  }).observe(document.querySelector('.cost-card'));
+}
 
 // boot
 readHash();

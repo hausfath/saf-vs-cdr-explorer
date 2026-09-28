@@ -29,6 +29,8 @@ For SAF+CCS, the denominator includes **both** CO2 avoided (fuel displacement) a
 
 ## Fundamental Constants
 
+**Units:** "dry ton" throughout this document means a metric tonne (1,000 kg) of oven-dry biomass. Per US short ton (907 kg), all per-ton quantities scale by 0.907 (e.g. FT-SAF yields ~51 rather than 56 gallons); costs per tonne of CO2 and ratios between pathways are unaffected.
+
 | Parameter | Value | Source |
 |-----------|-------|--------|
 | Carbon content of oven-dry biomass | 0.50 tC/t | BiCRS Roadmap |
