@@ -1063,7 +1063,6 @@ const PRESETS = [
   { id: 'nonco2-20', label: '+20% non-CO₂', desc: 'SAF credited for fewer contrails, near the GWP100 end of the literature range.', apply: i => { i.nonCo2 = 0.2; } },
   { id: 'nonco2-60', label: '+60% non-CO₂', desc: 'SAF credited for fewer contrails, near the GWP* end of the literature range.', apply: i => { i.nonCo2 = 0.6; } },
   { id: 'no45z', label: '45Z expired', desc: 'No clean fuel credit, as scheduled after 2029 under current law.', apply: i => { i.z45Max = 0; } },
-  { id: 'ccs150', label: 'CCS at $150/t', desc: 'Higher CCS cost for FT-SAF + CCS (the pre-September 2026 default).', apply: i => { i.ccsCost = 150; } },
 ];
 function presetInputs(id, useLca) {
   const p = PRESETS.find(x => x.id === id);

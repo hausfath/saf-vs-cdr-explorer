@@ -113,7 +113,7 @@ Bold = changed in September 2026. Previous lifecycle ranges were 60/70/85% (FT, 
 - *HEFA:* 2025 aviation-biofuel (HEFA) market price in the EU was €1,925/t versus €640/t for conventional jet (EASA 2025 reference prices, real index pricing), about $6.5–7/gal, which includes margin. Used-cooking-oil prices of roughly $1,000–1,300/t (market reports, unverified) put feedstock alone near $4/gal. The previous $4.50 P50 gave HEFA a net+subsidy cost ($109/t) well below the literature: El-Houjeiri et al. (2026) find a HEFA abatement-cost median of $362/t (range $112–526) across harmonized studies.
 - *AtJ:* unchanged; LanzaJet's Freedom Pines ethanol-to-jet plant now operates, but on non-cellulosic ethanol, and cellulosic ethanol has not reached commercial scale.
 
-**CCS cost rationale.** Gasification already strips CO2 in the acid-gas-removal unit as a near-pure stream, so the incremental cost is dehydration, compression, transport and storage. Published costs for high-purity streams: capture and compression ~$17.5/t average for >95% CO2 streams (NETL, 2018$; secondary extraction), $22–25/t for fermentation CCS (IEAGHG 2021-01); saline storage mostly ≤$8/t (NETL 2024); pipeline transport ~$15–25/t for dedicated 100 km lines (NETL). A standalone FT plant capturing ~0.5 Mt/yr would likely need its own pipeline and well, so the P50 ($70) and P90 ($120) sit above the ethanol-network analogs. The old $150/t is kept as a sensitivity case: it raises FT-SAF+CCS from $147 to $198/tCO2.
+**CCS cost rationale.** Gasification already strips CO2 in the acid-gas-removal unit as a near-pure stream, so the incremental cost is dehydration, compression, transport and storage. Published costs for high-purity streams: capture and compression ~$17.5/t average for >95% CO2 streams (NETL, 2018$; secondary extraction), $22–25/t for fermentation CCS (IEAGHG 2021-01); saline storage mostly ≤$8/t (NETL 2024); pipeline transport ~$15–25/t for dedicated 100 km lines (NETL). A standalone FT plant capturing ~0.5 Mt/yr would likely need its own pipeline and well, so the P50 ($70) and P90 ($120) sit above the ethanol-network analogs. We do not present a higher CCS cost (such as the previous $150/t) as a standalone sensitivity case: BECCS costs are calibrated to offtake totals that already embed their own transport and storage costs, so raising CCS cost for FT-SAF + CCS alone would not be a like-for-like comparison. The slider remains available for exploring FT-SAF + CCS on its own.
 
 **Derived values (defaults, full lifecycle):**
 - FT-SAF: 56.1 gal/dry ton; 0.59 tCO2e avoided per dry ton; gross $667, net $405, net+subsidy $328/tCO2.
@@ -433,7 +433,7 @@ Generated from the explorer defaults. P10–P90 are Monte Carlo percentiles of t
 - **BECCS (electricity) / FT-SAF benefit per dry ton:** 3.2× (1.90 vs 0.59 tCO2e)
 - **FT-SAF matches BECCS (electricity, $190/t)** at a jet price of ~$4.19/gal (MFSP $7.00), or an MFSP of ~$5.56/gal (jet $2.75), or a non-CO2 credit of ~72%
 - **FT-SAF at nth-plant MFSP ($4.00/gal):** ~$42/tCO2
-- **FT-SAF + CCS** ($147/t) is below BECCS (electricity) at defaults; it matches BECCS at an FT base MFSP of ~$8.18/gal, and rises to $198/t at a $150/t CCS cost
+- **FT-SAF + CCS** ($147/t) is below BECCS (electricity) at defaults; it matches BECCS at an FT base MFSP of ~$8.18/gal
 - **Without 45Z** (post-2029 expiry): FT-SAF $405/t
 
 ### Key Finding

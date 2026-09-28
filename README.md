@@ -30,7 +30,7 @@ assumption adjustable.
   full well-to-wake emissions of fossil jet). The lifecycle reduction sets the 45Z credit in both modes.
 
 **Scenario presets** (central, FT-SAF at $4 or $10/gal, jet fuel at $4.38, +20% or +60% non-CO₂ credit,
-45Z expired, CCS at $150/t) load in one click, each with a short link such as `#preset=ft4`. A
+45Z expired) load in one click, each with a short link such as `#preset=ft4`. A
 **break-even panel** shows, live, the jet fuel price, FT-SAF production cost and non-CO₂ credit at which
 FT-SAF would cost the same per tonne as BECCS (electricity), holding everything else at the current settings.
 Cost chart reference lines show EPA's 2023 social cost of carbon for 2025 emissions at 2.5% and 1.5%
