@@ -690,7 +690,8 @@
        independent of either credit.</p>
     <h3>Accounting toggles</h3>
     <p><em>Full lifecycle</em> (default) multiplies SAF's benefit by its lifecycle GHG reduction (CORSIA defaults,
-       55–91% depending on pathway), applies 95% net-negativity to CDR storage, and credits CDR co-products
+       55–91% depending on pathway), counts CDR storage net of its own lifecycle emissions (default 90% of gross
+       tonnes stored, adjustable per pathway), and credits CDR co-products
        (electricity, heat, hydrogen) with the fossil emissions they displace. <em>Simple displacement</em> is an
        upper bound for SAF: each gallon is credited with the full well-to-wake emissions of the fossil jet it replaces,
        as if producing the SAF emitted nothing, and CDR storage is counted gross. In both modes the lifecycle
@@ -737,7 +738,11 @@ const C = {
   CFPC_45Z_BASELINE_CI: 50.0,
   FOSSIL_JET_CI_G_PER_MJ: 89.0,          // CORSIA well-to-wake baseline
   FOSSIL_JET_CI: 89.0 * 1055.06 / 1000.0, // kg CO2e / mmBTU
-  NET_NEG: 0.95,
+  // Lifecycle factor for durably stored CO2: net removal / gross tonnes stored (supply-chain,
+  // processing and transport emissions). CDR cost inputs are quoted per NET tonne at this
+  // reference factor; FT-SAF + CCS stored CO2 uses the same default for a like-for-like comparison.
+  NET_NEG: 0.90,
+  CDR_LCA_REF: 0.90,
 };
 // Well-to-wake fossil jet emissions per gallon (~11.7 kg CO2e). Lifecycle
 // reductions are defined against this baseline (not the 9.75 kg combustion-only
@@ -818,7 +823,7 @@ const CDR_PATHWAYS = [
   { id: 'injection', name: 'Biomass injection', short: 'Biomass injection', feedstock: 'Wet waste (manure etc.)', cat: 'wet waste',
     eff: [0.85, 0.92, 0.95], cost: [125, 200, 285], coproduct: 'PFAS destruction', rev: [0, 0, 0], has45q: false, avoidedPerDt: 0 },
   { id: 'biochar', name: 'Biochar', short: 'Biochar', feedstock: 'Ag residues, forest waste', cat: 'cellulosic',
-    eff: [0.20, 0.30, 0.40], cost: [100, 200, 350], coproduct: 'biochar product', rev: [0, 20, 50], has45q: false, avoidedPerDt: 0 },
+    eff: [0.20, 0.30, 0.40], cost: [80, 160, 280], coproduct: 'biochar product', rev: [0, 20, 50], has45q: false, avoidedPerDt: 0 },
   { id: 'burial',  name: 'Biomass burial', short: 'Biomass burial', feedstock: 'Forest waste, woody biomass', cat: 'woody',
     eff: [0.85, 0.95, 0.98], cost: [90, 150, 200], coproduct: 'none', rev: [0, 0, 0], has45q: false, avoidedPerDt: 0 },
 ];
@@ -965,30 +970,38 @@ function evalScenario(inputs, opts) {
     const costT = scaledTriple(cp.cost, inputs.cdrCost[cp.id]);
     const revT = scaledTriple(cp.rev, inputs.cdrRev[cp.id]);
     const effT = scaledTriple(cp.eff, inputs.cdrEff[cp.id], 0.98);
-    // BECCS-H2 must elect 45Q or 45V (IRC 45V(d)(2) bars stacking); 45V pays
-    // $3/kg on the ~50 kg H2 per dry ton, expressed here per tCO2 removed.
-    let sub = cp.has45q ? inputs.q45 : 0;
+    // Cost and co-product inputs are per net tonne at the reference lifecycle factor; convert to
+    // per gross tonne stored, then express per net tonne (lifecycle) or per gross tonne (simple).
+    const lca = (inputs.cdrLca && inputs.cdrLca[cp.id]) || C.CDR_LCA_REF;
+    const perT = inputs.useLca ? 1 / lca : 1;          // gross-tonne quantity -> reported tonne
+    const toGross = C.CDR_LCA_REF;                     // net-at-reference input -> per gross tonne
+    // Credits are paid on gross (metered) tonnes. BECCS-H2 must elect 45Q or 45V (IRC 45V(d)(2)
+    // bars stacking); 45V pays $3/kg on the ~50 kg H2 per dry tonne, per gross tonne stored.
+    let subG = cp.has45q ? inputs.q45 : 0;
     let subLabel = '45Q credit';
     if (cp.id === 'beccsH2' && inputs.h2Credit === 'v45') {
-      sub = V45_PER_KG_H2 * H2_KG_PER_DRY_TON / (C.CO2E_PER_DRY_TON * effT[1]);
+      subG = V45_PER_KG_H2 * H2_KG_PER_DRY_TON / (C.CO2E_PER_DRY_TON * effT[1]);
       subLabel = '45V credit on H₂';
     }
-    const mid = cdrCosts(costT[1], revT[1], sub);
-    if (midOnly) { results.push({ def: cp, type: 'CDR', mid, effMid: effT[1], revMid: revT[1], subMid: sub, subLabel }); continue; }
+    const sub = subG * perT;
+    const k = toGross * perT;
+    const mid = cdrCosts(costT[1] * k, revT[1] * k, sub);
+    if (midOnly) { results.push({ def: cp, type: 'CDR', mid, effMid: effT[1], revMid: revT[1], subMid: sub, subLabel, lcaMid: lca }); continue; }
 
     const rand = mulberry32(hashId(cp.id));
     const normal = makeNormal(rand);
     const costs = splitNormalDraws(costT[0], costT[1], costT[2], n, normal, POS);
     const revs  = splitNormalDraws(revT[0], revT[1], revT[2], n, normal, POS);
-    const draws = { gross: costs, net: new Float64Array(n), netWithSubsidy: new Float64Array(n) };
+    const draws = { gross: new Float64Array(n), net: new Float64Array(n), netWithSubsidy: new Float64Array(n) };
     for (let i = 0; i < n; i++) {
-      draws.net[i] = costs[i] - revs[i];
-      draws.netWithSubsidy[i] = costs[i] - revs[i] - sub;
+      draws.gross[i] = costs[i] * k;
+      draws.net[i] = (costs[i] - revs[i]) * k;
+      draws.netWithSubsidy[i] = (costs[i] - revs[i]) * k - sub;
     }
     results.push({
       def: cp, type: 'CDR', mid,
       p10: bandOf(draws, 10), p90: bandOf(draws, 90),
-      effMid: effT[1], revMid: revT[1], subMid: sub, subLabel,
+      effMid: effT[1], revMid: revT[1], subMid: sub, subLabel, lcaMid: lca,
     });
   }
   return results;
@@ -1008,7 +1021,9 @@ function defaultInputs() {
     inputs.massYield[sp.id] = sp.massYield[1];
     inputs.lcaRed[sp.id] = sp.lca[1];
   }
+  inputs.cdrLca = {};
   for (const cp of CDR_PATHWAYS) {
+    inputs.cdrLca[cp.id] = C.CDR_LCA_REF;
     inputs.cdrCost[cp.id] = cp.cost[1];
     inputs.cdrRev[cp.id] = cp.rev[1];
     inputs.cdrEff[cp.id] = cp.eff[1];
@@ -1056,7 +1071,7 @@ function breakEven(inputs, lever, id, benchId, metric) {
 }
 // Presets are default inputs plus overrides; results always come from the model.
 const PRESETS = [
-  { id: 'central', label: 'Central', desc: 'Default assumptions (September 2026 calibration).', apply: () => {} },
+  { id: 'central', label: 'Central', desc: 'Default assumptions (October 2026 calibration).', apply: () => {} },
   { id: 'ft4',  label: 'FT at $4/gal', desc: 'FT-SAF reaches its projected nth-of-a-kind production cost.', apply: i => { i.mfsp.ft = 4; } },
   { id: 'ft10', label: 'FT at $10/gal', desc: 'FT-SAF at a first-of-a-kind production cost.', apply: i => { i.mfsp.ft = 10; } },
   { id: 'jet438', label: 'Jet at $4.38', desc: 'US Gulf Coast jet fuel at its September 2026 price.', apply: i => { i.jetPrice = 4.38; } },
@@ -1230,6 +1245,9 @@ function buildControls() {
     adv.append(
       slider({ key: 'eff-' + cp.id, label: 'Capture efficiency', unit: 'fraction', cls: 'cdr', min: 0.10, max: 0.98, step: 0.01,
         value: () => state.inputs.cdrEff[cp.id], set: v => { state.inputs.cdrEff[cp.id] = v; } }),
+      slider({ key: 'cdrlca-' + cp.id, label: 'Lifecycle factor', unit: 'net/gross', cls: 'cdr', min: 0.50, max: 1.00, step: 0.01,
+        sub: 'Net removal per gross tonne stored, after supply-chain and process emissions. Costs are quoted per net tonne at 0.90; a lower factor raises cost per net tonne',
+        value: () => state.inputs.cdrLca[cp.id], set: v => { state.inputs.cdrLca[cp.id] = v; } }),
       slider({ key: 'rev-' + cp.id, label: 'Co-product revenue (' + cp.coproduct + ')', unit: '$/tCO₂', cls: 'cdr', min: 0, max: 250, step: 1, decimals: 0,
         sub: cp.id === 'beccsH2' ? 'Default $130/tCO₂ ≈ $3.1/kg H₂, a clean-H₂ premium between gray (~$1–2/kg) and green (~$4.50+/kg)' : undefined,
         value: () => state.inputs.cdrRev[cp.id], set: v => { state.inputs.cdrRev[cp.id] = v; } }));
@@ -1357,7 +1375,7 @@ function tipForResult(r, metric) {
   return `<h4>${esc(r.def.name)}</h4>
     <table>${rows.map(x => `<tr><td>${x[0]}</td><td>${x[1]}</td></tr>`).join('')}
     <tr class="total"><td>Net + subsidies</td><td>${fmt$(r.mid.netWithSubsidy)}/tCO₂</td></tr></table>
-    <div class="muted" style="margin-top:6px">${(C.CO2E_PER_DRY_TON * r.effMid).toFixed(2)} tCO₂ removed per dry tonne (${Math.round(r.effMid * 100)}% capture)</div>
+    <div class="muted" style="margin-top:6px">${(C.CO2E_PER_DRY_TON * r.effMid).toFixed(2)} tCO₂ stored per dry tonne (${Math.round(r.effMid * 100)}% capture)${state.inputs.useLca ? `, ${(C.CO2E_PER_DRY_TON * r.effMid * r.lcaMid).toFixed(2)} net at a ${r.lcaMid.toFixed(2)} lifecycle factor` : ''}</div>
     <div class="muted">P10–P90: ${fmt$(r.p10[metric])} – ${fmt$(r.p90[metric])}</div>`;
 }
 
@@ -1488,10 +1506,10 @@ function renderCarbonChart(results) {
   const segRows = rows.map(r => {
     let stored = 0, avoided = 0;
     if (r.type === 'SAF') {
-      stored = r.mid.co2Removed;                     // already net of 95% negativity in lifecycle mode
+      stored = r.mid.co2Removed;                     // already net of the storage lifecycle factor in lifecycle mode
       avoided = r.mid.co2Avoided + r.mid.nonCo2;     // lifecycle-scaled when toggle is on
     } else {
-      stored = C.CO2E_PER_DRY_TON * r.effMid * (useLca ? C.NET_NEG : 1);
+      stored = C.CO2E_PER_DRY_TON * r.effMid * (useLca ? r.lcaMid : 1);
       avoided = useLca ? r.def.avoidedPerDt : 0;
     }
     const grossStored = r.type === 'SAF' ? C.CO2E_PER_DRY_TON * r.def.cdrEff : C.CO2E_PER_DRY_TON * r.effMid;
@@ -1528,7 +1546,7 @@ function renderCarbonChart(results) {
       el('path', { d: barPath(x(0), x(s.stored) - GAP / 2, by, barH), fill: 'var(--cdr)', class: 'bar-main' }, gEl);
       cursor = s.stored;
     }
-    // released segment starts where net storage ends (in lifecycle mode the 5% net-negativity haircut is shown as released)
+    // released segment starts where net storage ends (in lifecycle mode the lifecycle-emissions haircut is shown as released)
     const grossStored = s.stored;
     if (C.CO2E_PER_DRY_TON - s.stored > 0.005) {
       el('rect', { x: x(grossStored) + GAP / 2, y: by, width: Math.max(0, x(C.CO2E_PER_DRY_TON) - x(grossStored) - GAP), height: barH, rx: 2, fill: 'var(--released)' }, gEl);
@@ -1541,7 +1559,7 @@ function renderCarbonChart(results) {
       .textContent = s.total.toFixed(2);
     el('rect', { x: 0, y: mt + i * rowH, width: W, height: rowH, fill: 'transparent' }, gEl);
     attachTip(gEl, () => `<h4>${esc(s.r.def.name)}</h4><table>
-      <tr><td>CO₂ stored${useLca ? ' (net of 95% negativity)' : ''}</td><td>${s.stored.toFixed(2)}</td></tr>
+      <tr><td>CO₂ stored${useLca ? ' (net of lifecycle emissions)' : ''}</td><td>${s.stored.toFixed(2)}</td></tr>
       <tr><td>CO₂ avoided${useLca && s.r.type === 'SAF' ? ' (lifecycle-adjusted)' : ''}${s.r.type === 'SAF' && s.r.mid.nonCo2 > 0 ? ' incl. non-CO₂ credit' : ''}</td><td>${s.avoided.toFixed(2)}</td></tr>
       <tr><td>CO₂ released</td><td>${s.released.toFixed(2)}</td></tr>
       <tr class="total"><td>Total climate benefit</td><td>${s.total.toFixed(2)} tCO₂e per dry tonne</td></tr></table>`);
@@ -1553,7 +1571,7 @@ function renderCarbonChart(results) {
 // ============================================================================
 // CDR climate benefit per dry ton, matching the carbon chart's accounting
 function cdrBenefitPerDt(r, useLca) {
-  return C.CO2E_PER_DRY_TON * r.effMid * (useLca ? C.NET_NEG : 1) + (useLca ? r.def.avoidedPerDt : 0);
+  return C.CO2E_PER_DRY_TON * r.effMid * (useLca ? r.lcaMid : 1) + (useLca ? r.def.avoidedPerDt : 0);
 }
 function renderTiles(results) {
   // Benchmarks are two established routes on the same residues, not the cheapest options:
@@ -1639,7 +1657,7 @@ function readHash() {
       if (typeof p.i.useLca === 'boolean') d.useLca = p.i.useLca;
       if (['q45', 'z45'].includes(p.i.ftccsCredit)) d.ftccsCredit = p.i.ftccsCredit;
       if (['q45', 'v45'].includes(p.i.h2Credit)) d.h2Credit = p.i.h2Credit;
-      for (const grp of ['mfsp', 'massYield', 'lcaRed', 'cdrCost', 'cdrRev', 'cdrEff'])
+      for (const grp of ['mfsp', 'massYield', 'lcaRed', 'cdrCost', 'cdrRev', 'cdrEff', 'cdrLca'])
         for (const id in d[grp]) if (p.i[grp] && typeof p.i[grp][id] === 'number') d[grp][id] = p.i[grp][id];
       state.inputs = d;
     }
@@ -1749,7 +1767,7 @@ function update() {
     document.getElementById('carbonSub').textContent =
       'Where the 1.83 tCO₂e in each dry tonne (1,000 kg) of biomass ends up, plus avoided fossil emissions beyond it. ' +
       (state.inputs.useLca
-        ? 'Full accounting: storage at 95% net-negativity, SAF avoidance lifecycle-adjusted, CDR co-product displacement credited.'
+        ? 'Full accounting: storage net of lifecycle emissions (90% of gross by default), SAF avoidance lifecycle-adjusted, CDR co-product displacement credited.'
         : 'Simple accounting: gross storage and full displacement credit.') +
       ' Cellulosic and woody feedstock pathways only.';
     writeHash();

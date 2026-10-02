@@ -71,12 +71,13 @@ Open `index.html` in any browser. That's it.
 - No commercial FT-SAF+CCS plant exists; those costs are techno-economic estimates.
 - HEFA uses waste fats/oils, which mostly don't compete with cellulosic CDR for feedstock and
   are supply-limited (~25 Mt/yr of used cooking oil and animal fats collected globally).
-- CDR costs are calibrated to offtake pricing and are not changed by the September 2026 update.
+- CDR costs are calibrated to offtake pricing, quoted per net tonne at a 0.90 lifecycle factor (adjustable per
+  pathway; 45Q is credited per gross tonne stored). Biochar is set to a $140 net price (CDR.fyi average).
 
 ## Credits
 
 Analysis and tool by [Zeke Hausfather](https://github.com/hausfath). Assumptions current as
-of September 2026 (post-OBBBA tax credit treatment).
+of October 2026 (post-OBBBA tax credit treatment).
 
 ## License
 
