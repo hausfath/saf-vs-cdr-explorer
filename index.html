@@ -769,7 +769,8 @@ function safCosts(o) {
   const grossCost = o.mfsp * gal;
   const fuelRevenue = o.jetPrice * gal;
   const safSubsidy = o.credit * gal;
-  const ccsSubsidy = o.cdrEff > 0 ? grossStored * o.q45 : 0.0; // 45Q is paid on metered tonnes stored
+  // 45Q applied to the stored tonnes counted (net in lifecycle mode), the same convention as CDR pathways
+  const ccsSubsidy = o.cdrEff > 0 ? co2Removed * o.q45 : 0.0;
   return {
     gross: grossCost / co2Total,
     net: (grossCost - fuelRevenue) / co2Total,
@@ -975,15 +976,17 @@ function evalScenario(inputs, opts) {
     const lca = (inputs.cdrLca && inputs.cdrLca[cp.id]) || C.CDR_LCA_REF;
     const perT = inputs.useLca ? 1 / lca : 1;          // gross-tonne quantity -> reported tonne
     const toGross = C.CDR_LCA_REF;                     // net-at-reference input -> per gross tonne
-    // Credits are paid on gross (metered) tonnes. BECCS-H2 must elect 45Q or 45V (IRC 45V(d)(2)
-    // bars stacking); 45V pays $3/kg on the ~50 kg H2 per dry tonne, per gross tonne stored.
-    let subG = cp.has45q ? inputs.q45 : 0;
+    // 45Q is applied to the tonnes counted (net tonnes in lifecycle mode), matching the Frontier
+    // BiCRS POV. Statute pays on gross metered tonnes, so this understates 45Q by a factor L
+    // (~$9/t at L = 0.90), conservatively against CDR. BECCS-H2 must elect 45Q or 45V (IRC
+    // 45V(d)(2) bars stacking); 45V pays $3/kg on ~50 kg H2 per dry tonne, a physical quantity
+    // per gross tonne stored, so it is converted to the counted tonne.
+    let sub = cp.has45q ? inputs.q45 : 0;
     let subLabel = '45Q credit';
     if (cp.id === 'beccsH2' && inputs.h2Credit === 'v45') {
-      subG = V45_PER_KG_H2 * H2_KG_PER_DRY_TON / (C.CO2E_PER_DRY_TON * effT[1]);
+      sub = V45_PER_KG_H2 * H2_KG_PER_DRY_TON / (C.CO2E_PER_DRY_TON * effT[1]) * perT;
       subLabel = '45V credit on H₂';
     }
-    const sub = subG * perT;
     const k = toGross * perT;
     const mid = cdrCosts(costT[1] * k, revT[1] * k, sub);
     if (midOnly) { results.push({ def: cp, type: 'CDR', mid, effMid: effT[1], revMid: revT[1], subMid: sub, subLabel, lcaMid: lca }); continue; }
