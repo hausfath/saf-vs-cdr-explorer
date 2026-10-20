@@ -117,7 +117,7 @@ Bold = changed in September 2026. Previous lifecycle ranges were 60/70/85% (FT, 
 
 **Derived values (defaults, full lifecycle):**
 - FT-SAF: 56.1 gal/dry ton; 0.59 tCO2e avoided per dry ton; gross $667, net $405, net+subsidy $328/tCO2.
-- FT-SAF + CCS: MFSP $7.00 + $1.23 CCS = $8.23/gal; 0.59 avoided + 0.93 net stored = 1.52 tCO2e per dry ton; net+subsidy $147/tCO2 (45Q election); $165/tCO2 with the 45Z election.
+- FT-SAF + CCS: MFSP $7.00 + $1.23 CCS = $8.23/gal; 0.59 avoided + 0.89 net stored = 1.47 tCO2e per dry ton; net+subsidy $157/tCO2 (45Q election); $170/tCO2 with the 45Z election.
 - HEFA: 165 gal per ton of oil; 1.50 tCO2e avoided per ton of oil; net+subsidy $210/tCO2.
 
 HEFA uses waste fats/oils rather than cellulosic biomass and is not comparable per dry ton. Global collection of used cooking oil (~12 Mt/yr) and animal fats (~13 Mt/yr) is roughly 25 Mt/yr (IEA 2023), most of it already used for biofuels. Earlier versions said "~5–10 Mt/yr," which appears to have been a units mix-up (GlobalData's 2030 forecast is 5–10 *billion gallons*) or a regional subset. AtJ fermentation produces a very pure CO2 stream, but only ~15% of biomass carbon (ETC 2021); AtJ+CCS is not modeled separately.
@@ -166,7 +166,9 @@ CDR pathways that produce useful co-products (electricity, heat, hydrogen) gener
 | BECCS (hydrogen) | ~50 kg H2 per dry ton | 0.55 | Gray H2 at 12 tCO2/tH2 |
 | WtE + CCS | Electricity + heat | 0.30 | Fossil grid mix |
 
-These avoided emissions are not included in the $/tCO2 cost metric (which is per tCO2 *removed* only) but are relevant for total climate benefit accounting per dry ton of feedstock.
+Under full lifecycle accounting these avoided emissions are included in the $/tCO2e cost metric, which is per tonne of total benefit (stored + co-product avoided), the same basis on which FT-SAF + CCS is credited for both its fuel and its storage. The cost per tonne stored equals the per-benefit cost ÷ stored/(stored + avoided) and is shown in the chart tooltips. Under simple displacement the metric is per tonne stored only.
+
+*Changed 2026-10-20:* previously the cost metric excluded co-product avoided emissions in both modes while the carbon chart and FT-SAF + CCS included them, so BECCS was compared on a narrower basis than FT-SAF + CCS.
 
 ### Subsidy Eligibility
 
@@ -193,8 +195,8 @@ These avoided emissions are not included in the $/tCO2 cost metric (which is per
 
 **Derived (mid values):**
 - Gross tCO2 stored per dry tonne: 1.650 (net 1.485 at L = 0.90)
-- Net $/tCO2: $275
-- Net + subsidy $/tCO2: $190 (lifecycle)
+- Net $/tCO2 stored: $275 ($225 per tCO2e of benefit, lifecycle)
+- Net + subsidy: $190 per tCO2 stored; $155 per tCO2e of benefit (lifecycle)
 
 #### BECCS (Heat)
 
@@ -208,8 +210,8 @@ These avoided emissions are not included in the $/tCO2 cost metric (which is per
 
 **Derived (mid values):**
 - Gross tCO2 stored per dry tonne: 1.650 (net 1.485 at L = 0.90)
-- Net $/tCO2: $260
-- Net + subsidy $/tCO2: $175 (lifecycle)
+- Net $/tCO2 stored: $260 ($223 per tCO2e of benefit, lifecycle)
+- Net + subsidy: $175 per tCO2 stored; $150 per tCO2e of benefit (lifecycle)
 
 #### BECCS (Hydrogen)
 
@@ -223,8 +225,8 @@ These avoided emissions are not included in the $/tCO2 cost metric (which is per
 
 **Derived (mid values):**
 - Gross tCO2 stored per dry tonne: 1.192 (net 1.073 at L = 0.90)
-- Net $/tCO2: $170
-- Net + subsidy $/tCO2: $85 (lifecycle)
+- Net $/tCO2 stored: $170 ($112 per tCO2e of benefit, lifecycle)
+- Net + subsidy: $85 per tCO2 stored; $56 per tCO2e of benefit (lifecycle)
 
 **Note:** BECCS-H2 has lower CDR efficiency (65% vs 90%) because the gasification/reforming process diverts more carbon into the hydrogen product stream rather than capturing it as CO2. However, the avoided emissions from displacing gray H2 are substantial (0.55 tCO2/dry ton), partially compensating for the lower direct CDR.
 
@@ -240,8 +242,8 @@ These avoided emissions are not included in the $/tCO2 cost metric (which is per
 
 **Derived (mid values):**
 - Gross tCO2 stored per dry tonne: 1.467 (net 1.320 at L = 0.90)
-- Net $/tCO2: $260
-- Net + subsidy $/tCO2: $175 (lifecycle)
+- Net $/tCO2 stored: $260 ($212 per tCO2e of benefit, lifecycle)
+- Net + subsidy: $175 per tCO2 stored; $143 per tCO2e of benefit (lifecycle)
 
 #### Bio-oil Sequestration (Cellulosic)
 
@@ -394,7 +396,7 @@ The explorer's cost chart shows two reference lines from EPA's *Report on the So
 - Current US federal status: Executive Order 14154 (Jan 20, 2025) disbanded the IWG and withdrew its estimates; OMB memo M-25-27 (May 5, 2025) states "it is no longer Federal government policy to maintain a uniform estimate of the monetized impacts of greenhouse gas emissions" and that such analysis will be needed in "few to none" cases, reverting to Circular A-4 (2003) where used.
 - Replaces the earlier unsourced "$50 / $200" lines (changed 2026-09-28).
 
-## Summary Results (Central Estimates, September 2026 defaults)
+## Summary Results (Central Estimates, October 2026 defaults)
 
 Generated from the explorer defaults. P10–P90 are Monte Carlo percentiles of the net + subsidy cost. "tCO2 benefit/dry ton" is per ton of oil for the lipid pathways and per ton of MSW or wet waste for those pathways.
 
@@ -403,14 +405,14 @@ Generated from the explorer defaults. P10–P90 are Monte Carlo percentiles of t
 | Pathway | Type | Gross $/tCO₂ | Net $/tCO₂ | Net+Sub $/tCO₂ | P10–P90 (net+sub) | tCO₂ benefit/dry tonne |
 |---|---|---|---|---|---|---|
 | FT-SAF (ag/forest waste) | SAF | $667 | $405 | $328 | $12 – $640 | 0.59 |
-| FT-SAF + CCS | SAF+CDR | $313 | $208 | $157 | $36 – $284 | 1.47 |
+| FT-SAF + CCS | SAF+CDR | $313 | $208 | $157 | $29 – $281 | 1.47 |
 | FT-SAF (switchgrass) | SAF | $804 | $509 | $442 | $94 – $777 | 0.52 |
 | HEFA (waste fats/oils) | SAF | $577 | $275 | $210 | $17 – $436 | 1.50 |
 | AtJ-SAF (ag/forest waste) | SAF | $1188 | $825 | $780 | $231 – $1238 | 0.30 |
-| BECCS (electricity) | CDR | $300 | $275 | $190 | $91 – $289 | 1.82 |
-| BECCS (heat) | CDR | $285 | $260 | $175 | $89 – $287 | 1.74 |
-| BECCS (hydrogen) | CDR | $300 | $170 | $85 | −$27 – $197 | 1.62 |
-| WtE + CCS | CDR | $300 | $260 | $175 | $69 – $273 | 1.62 |
+| BECCS (electricity) | CDR | $245 | $225 | $155 | $75 – $237 | 1.82 |
+| BECCS (heat) | CDR | $244 | $223 | $150 | $76 – $245 | 1.74 |
+| BECCS (hydrogen) | CDR | $198 | $112 | $56 | −$18 – $130 | 1.62 |
+| WtE + CCS | CDR | $244 | $212 | $143 | $56 – $222 | 1.62 |
 | Bio-oil seq. (cellulosic) | CDR | $350 | $350 | $350 | $251 – $500 | 1.07 |
 | Bio-oil seq. (HTL, lipid) | CDR | $325 | $325 | $325 | $228 – $478 | 1.07 |
 | Biomass injection | CDR | $200 | $200 | $200 | $123 – $283 | 1.52 |
@@ -422,7 +424,7 @@ Generated from the explorer defaults. P10–P90 are Monte Carlo percentiles of t
 | Pathway | Type | Gross $/tCO₂ | Net $/tCO₂ | Net+Sub $/tCO₂ | P10–P90 (net+sub) | tCO₂ benefit/dry tonne |
 |---|---|---|---|---|---|---|
 | FT-SAF (ag/forest waste) | SAF | $600 | $365 | $295 | $11 – $554 | 0.65 |
-| FT-SAF + CCS | SAF+CDR | $282 | $188 | $136 | $26 – $248 | 1.64 |
+| FT-SAF + CCS | SAF+CDR | $282 | $188 | $136 | $21 – $243 | 1.64 |
 | FT-SAF (switchgrass) | SAF | $643 | $407 | $354 | $77 – $605 | 0.65 |
 | HEFA (waste fats/oils) | SAF | $450 | $214 | $164 | $13 – $323 | 1.92 |
 | AtJ-SAF (ag/forest waste) | SAF | $772 | $536 | $507 | $152 – $762 | 0.46 |
@@ -439,14 +441,14 @@ Generated from the explorer defaults. P10–P90 are Monte Carlo percentiles of t
 ### Key Ratios and break-evens (full lifecycle, net + subsidies)
 
 - **BECCS (electricity) / FT-SAF benefit per dry tonne:** 3.1× (1.82 vs 0.59 tCO2e)
-- **FT-SAF matches BECCS (electricity, $190/t)** at a jet price of ~$4.19/gal (MFSP $7.00), or an MFSP of ~$5.56/gal (jet $2.75), or a non-CO2 credit of ~72%
+- **FT-SAF matches BECCS (electricity, $155/t of benefit)** at a jet price of ~$4.56/gal (MFSP $7.00) or an MFSP of ~$5.19/gal (jet $2.75); the non-CO2 credit needed (~111%) is beyond the literature range
 - **FT-SAF at nth-plant MFSP ($4.00/gal):** ~$42/tCO2
-- **FT-SAF + CCS** ($157/t) is below BECCS (electricity) at defaults; it matches BECCS at an FT base MFSP of ~$7.86/gal
+- **FT-SAF + CCS** ($157/t) is about equal to BECCS (electricity, $155/t) at defaults; they match at an FT base MFSP of ~$6.95/gal. The P10–P90 ranges overlap heavily.
 - **Without 45Z** (post-2029 expiry): FT-SAF $405/t
 
 ### Key Finding
 
-At current costs, cellulosic SAF without carbon capture costs roughly $330/tCO2 avoided, well above most biomass CDR (about $140–350/t after co-product revenue and credits), and delivers about a third of the climate benefit per tonne of biomass. The comparison is highly sensitive to three uncertain inputs: whether FT plants reach nth-plant costs, the jet fuel price, and whether non-CO2 benefits are counted. FT-SAF + CCS, which both displaces fossil jet and stores ~54% of the biomass carbon, is cost-competitive with the benchmark BECCS pathway at central assumptions, but no such plant exists, and its advantage depends on the FT process itself becoming bankable.
+At current costs, cellulosic SAF without carbon capture costs roughly $330/tCO2 avoided, well above most biomass CDR (about $140–350/t of benefit after co-product revenue and credits), and delivers about a third of the climate benefit per tonne of biomass. The comparison is highly sensitive to three uncertain inputs: whether FT plants reach nth-plant costs, the jet fuel price, and whether non-CO2 benefits are counted. FT-SAF + CCS, which both displaces fossil jet and stores ~54% of the biomass carbon, costs about the same as the benchmark BECCS pathway per tonne of total benefit at central assumptions, but no such plant exists, and its advantage depends on the FT process itself becoming bankable.
 
 ---
 
@@ -546,3 +548,14 @@ Validation (2026-09-24, before simple displacement was redefined on 2026-09-28):
 **2026-10-02 follow-up:** CDR lifecycle disaggregated from price: per-pathway factor L (default 0.90); cost and co-product inputs are quoted per net tonne at that reference; 45Q is applied to the tonnes counted (per net tonne in lifecycle mode), matching the Frontier BiCRS POV, so default BECCS costs are unchanged (electricity $190, heat and WtE + CCS $175, H2 $85). Lowering L now raises CDR cost per net tonne. FT-SAF + CCS stored CO2 uses the same 0.90 (was 0.95) and the same 45Q convention: $147 → $157/t; parity with BECCS at an FT base MFSP of $7.86/gal (was $8.18). Biochar total cost 200 → 160 so its net price is $140 (CDR.fyi average, user-supplied): $180 → $140. FT-SAF break-evens unchanged ($4.19 jet, $5.56 MFSP, 72% non-CO2). Simple displacement now reports CDR per gross tonne stored (~10% below lifecycle-mode cost before credits).
 
 **Open items:** BECCS-H2 documentation used 52 kg H2/tCO2 while the code uses 50 kg H2 per dry ton (≈42 kg/tCO2 at 65% capture), so the $130/tCO2 co-product default implies ~$3.1/kg rather than $2.50/kg; CDR values were not changed pending review. The 53.7% FT carbon-capture share was not verified against a biomass-only primary source.
+
+**2026-10-20 follow-up:**
+- *Common benefit basis for CDR.* In full lifecycle mode, CDR $/t now divides by stored plus co-product-avoided tonnes, as the method text and carbon chart already stated. Pathways without energy co-products are unchanged. New values per tonne of benefit (per tonne stored unchanged):
+  - BECCS-electricity $190 → $155
+  - BECCS-heat $175 → $150
+  - BECCS-H2 $85 → $56
+  - WtE + CCS $175 → $143
+- *Break-evens against BECCS-electricity.* Jet $4.19 → $4.56/gal; MFSP $5.56 → $5.19/gal; non-CO2 72% → ~111% (beyond the literature range); FT-SAF + CCS parity $7.86 → $6.95/gal.
+- *Common random numbers.* FT-SAF + CCS now shares FT-SAF's random stream, so their shared inputs get identical draws. Before, they were sampled independently, which made paired comparisons look less certain than they are; with shared draws, FT-SAF + CCS is below FT-SAF in about 87% of draws. FT-SAF + CCS P10–P90 moves from $36–284 to $29–281 (sampling noise); central values are unchanged.
+- *Stale derived values corrected.* The FT-SAF + CCS derived values (0.89 t stored, $157, $170 with 45Z) were stale from before 2026-10-02.
+- *Chart order.* FT-SAF + CCS is the first row of the cost chart and table.

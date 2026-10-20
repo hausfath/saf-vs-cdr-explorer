@@ -627,7 +627,7 @@
     <div class="legend">
       <span class="key"><i style="background:var(--saf)"></i> SAF (avoided emissions)</span>
       <span class="key"><i style="background:var(--hyb)"></i> SAF + CCS (avoided + stored)</span>
-      <span class="key"><i style="background:var(--cdr)"></i> CDR (removed CO₂)</span>
+      <span class="key"><i style="background:var(--cdr)"></i> CDR (removed + co-product avoided)</span>
       <span class="key"><i style="background:none;border-bottom:2px solid var(--ink-2);height:0;border-radius:0"></i> P10–P90 range</span>
       <span class="key"><i style="background:none;border-left:1px dashed var(--ink-3);width:0;border-radius:0"></i> Social cost of carbon, EPA 2023: $159 (2.5% discount rate) to $441 (1.5%), 2025$</span>
     </div>
@@ -671,8 +671,11 @@
        slider applied to the ~0.018 tCO₂ stored per gallon (54% of biomass carbon exits as a concentrated CO₂
        stream during gasification, so capture is cheap; the cost is mostly compression, transport and storage,
        default $70/t, P10–P90 $40–120).</p>
-    <p><strong>CDR:</strong> <code>(total cost − co-product revenue − 45Q) ÷ tCO₂ removed</code>. Costs are feedstock-inclusive
-       and calibrated to actual offtake pricing. A dry tonne of biomass (50% carbon) holds 1.83 tCO₂e; removal = 1.83 × capture efficiency.</p>
+    <p><strong>CDR:</strong> <code>(total cost − co-product revenue − 45Q) ÷ tCO₂e benefit</code>. Costs are feedstock-inclusive
+       and calibrated to actual offtake pricing per tonne removed. A dry tonne of biomass (50% carbon) holds 1.83 tCO₂e; removal = 1.83 × capture efficiency.
+       Under full lifecycle accounting the benefit also includes fossil emissions avoided by energy co-products
+       (electricity, heat, hydrogen), the same basis on which FT-SAF&nbsp;+&nbsp;CCS is credited for both its fuel and its
+       stored CO₂; hover a bar to see the cost per tonne stored. Under simple displacement it is CO₂ removed only.</p>
     <h3>Subsidies</h3>
     <p>The 45Q credit ($85/tCO₂ statutory) requires gaseous CO₂ capture: BECCS, WtE+CCS, and FT-SAF+CCS qualify; bio-oil,
        biochar, burial, and injection do not. The 45Z Clean Fuel Production Credit (post-OBBBA: up to $1.00/gal with
@@ -948,7 +951,9 @@ function evalScenario(inputs, opts) {
     const mid = run(yieldT[1], mfspT[1], ccsT[1], jetTriple[1], lcaT[1]);
     if (midOnly) { results.push({ def: sp, type: 'SAF', mid, lcaMid: lcaT[1] }); continue; }
 
-    const rand = mulberry32(hashId(sp.id));
+    // FT-SAF+CCS reuses FT-SAF's seed so the shared inputs (yield, MFSP, jet price, lifecycle
+    // reduction) get identical draws; its CCS cost draws come after them in the same stream.
+    const rand = mulberry32(hashId(isCcs ? 'ft' : sp.id));
     const normal = makeNormal(rand);
     const yields = splitNormalDraws(yieldT[0], yieldT[1], yieldT[2], n, normal, FRAC);
     const mfsps  = splitNormalDraws(mfspT[0], mfspT[1], mfspT[2], n, normal, POS);
@@ -987,9 +992,17 @@ function evalScenario(inputs, opts) {
       sub = V45_PER_KG_H2 * H2_KG_PER_DRY_TON / (C.CO2E_PER_DRY_TON * effT[1]) * perT;
       subLabel = '45V credit on H₂';
     }
-    const k = toGross * perT;
-    const mid = cdrCosts(costT[1] * k, revT[1] * k, sub);
-    if (midOnly) { results.push({ def: cp, type: 'CDR', mid, effMid: effT[1], revMid: revT[1], subMid: sub, subLabel, lcaMid: lca }); continue; }
+    // Full lifecycle credits energy co-products with the fossil emissions they displace, as SAF is
+    // credited for displaced jet fuel, so costs are per tonne of total benefit (stored + avoided).
+    // Simple displacement counts storage only. Efficiency is not sampled, so one factor fits all draws.
+    const storedPerDt = C.CO2E_PER_DRY_TON * effT[1] * (inputs.useLca ? lca : 1);
+    const avoidedPerDt = inputs.useLca ? cp.avoidedPerDt : 0;
+    const fB = storedPerDt / (storedPerDt + avoidedPerDt);
+    const k = toGross * perT * fB;
+    const subB = sub * fB;
+    const mid = cdrCosts(costT[1] * k, revT[1] * k, subB);
+    const extra = { effMid: effT[1], revMid: revT[1], subMid: subB, subLabel, lcaMid: lca, benefitFactor: fB };
+    if (midOnly) { results.push({ def: cp, type: 'CDR', mid, ...extra }); continue; }
 
     const rand = mulberry32(hashId(cp.id));
     const normal = makeNormal(rand);
@@ -999,12 +1012,12 @@ function evalScenario(inputs, opts) {
     for (let i = 0; i < n; i++) {
       draws.gross[i] = costs[i] * k;
       draws.net[i] = (costs[i] - revs[i]) * k;
-      draws.netWithSubsidy[i] = (costs[i] - revs[i]) * k - sub;
+      draws.netWithSubsidy[i] = (costs[i] - revs[i]) * k - subB;
     }
     results.push({
       def: cp, type: 'CDR', mid,
       p10: bandOf(draws, 10), p90: bandOf(draws, 90),
-      effMid: effT[1], revMid: revT[1], subMid: sub, subLabel, lcaMid: lca,
+      ...extra,
     });
   }
   return results;
@@ -1347,7 +1360,7 @@ function groupedRows(results) {
   const byId = Object.fromEntries(results.map(r => [r.def.id, r]));
   const pick = ids => ids.map(id => byId[id]);
   return [
-    { label: 'Cellulosic residues: SAF', rows: pick(['ft', 'ftccs', 'ftsw', 'atj']) },
+    { label: 'Cellulosic residues: SAF', rows: pick(['ftccs', 'ft', 'ftsw', 'atj']) },
     { label: 'Cellulosic residues: carbon removal', rows: pick(['beccsE', 'beccsH', 'beccsH2', 'biooil', 'biochar']) },
     { label: 'Lipid feedstocks', rows: pick(['hefa', 'biooilHtl']) },
     { label: 'Other feedstocks: carbon removal', rows: pick(['wte', 'injection', 'burial']) },
@@ -1365,7 +1378,7 @@ function tipForResult(r, metric) {
     if (m.qCreditPerT > 0) rows.push(['− 45Q on stored CO₂', fmt$(-m.qCreditPerT)]);
     return `<h4>${esc(r.def.name)}</h4>
       <table>${rows.map(x => `<tr><td>${x[0]}</td><td>${x[1]}</td></tr>`).join('')}
-      <tr class="total"><td>Net + subsidies</td><td>${fmt$(m.netWithSubsidy)}/tCO₂</td></tr></table>
+      <tr class="total"><td>Net + subsidies</td><td>${fmt$(m.netWithSubsidy)}/tCO₂e</td></tr></table>
       <div class="muted" style="margin-top:6px">${m.gallons.toFixed(0)} gal per dry tonne · ${m.co2Total.toFixed(2)} tCO₂e benefit per dry tonne
       ${m.co2Removed > 0 ? `(${m.co2Avoided.toFixed(2)} avoided + ${m.co2Removed.toFixed(2)} stored)` : ''}${m.nonCo2 > 0 ? ` incl. ${m.nonCo2.toFixed(2)} non-CO₂ credit` : ''}</div>
       <div class="muted">P10–P90: ${fmt$(r.p10[metric])} – ${fmt$(r.p90[metric])}</div>`;
@@ -1373,12 +1386,13 @@ function tipForResult(r, metric) {
   const rows = [
     ['Gross cost', fmt$(r.mid.gross)],
     ['− Co-product revenue', fmt$(-(r.mid.gross - r.mid.net))],
-    ['− ' + (r.subLabel || '45Q credit'), fmt$(-(r.mid.net - r.mid.netWithSubsidy))],
+    ['− ' + (r.subLabel || '45Q credit') + (r.benefitFactor < 1 ? ' (per tonne of benefit)' : ''), fmt$(-(r.mid.net - r.mid.netWithSubsidy))],
   ];
   return `<h4>${esc(r.def.name)}</h4>
     <table>${rows.map(x => `<tr><td>${x[0]}</td><td>${x[1]}</td></tr>`).join('')}
-    <tr class="total"><td>Net + subsidies</td><td>${fmt$(r.mid.netWithSubsidy)}/tCO₂</td></tr></table>
+    <tr class="total"><td>Net + subsidies</td><td>${fmt$(r.mid.netWithSubsidy)}/tCO₂e</td></tr></table>
     <div class="muted" style="margin-top:6px">${(C.CO2E_PER_DRY_TON * r.effMid).toFixed(2)} tCO₂ stored per dry tonne (${Math.round(r.effMid * 100)}% capture)${state.inputs.useLca ? `, ${(C.CO2E_PER_DRY_TON * r.effMid * r.lcaMid).toFixed(2)} net at a ${r.lcaMid.toFixed(2)} lifecycle factor` : ''}</div>
+    ${r.benefitFactor < 1 ? `<div class="muted">Per tonne of benefit, including ${r.def.avoidedPerDt.toFixed(2)} tCO₂ per dry tonne avoided by the ${esc(r.def.coproduct)} co-product. Per tonne stored: ${fmt$(r.mid.netWithSubsidy / r.benefitFactor)}.</div>` : ''}
     <div class="muted">P10–P90: ${fmt$(r.p10[metric])} – ${fmt$(r.p90[metric])}</div>`;
 }
 
@@ -1592,7 +1606,7 @@ function renderTiles(results) {
     { label: 'FT-SAF', dot: 'var(--saf)', value: fmt$(saf.mid[metric]) + '/t',
       sub: `Per tCO₂e avoided, ${basis}. Fischer-Tropsch fuel from residues` },
     { label: 'BECCS (electricity)', dot: 'var(--cdr)', value: fmt$(cdr.mid[metric]) + '/t',
-      sub: `Per tCO₂ removed, ${basis}. Carbon removal on the same residues` },
+      sub: `Per tCO₂e ${state.inputs.useLca ? 'removed or avoided by its electricity' : 'removed'}, ${basis}. Carbon removal on the same residues` },
     Math.abs(gap) < 5
       ? { label: 'Cheaper per tonne', value: 'About equal', sub: 'The two benchmarks are within $5/t of each other' }
       : { label: (gap > 0 ? 'BECCS' : 'FT-SAF') + ' is cheaper by', value: fmt$(Math.abs(gap)) + '/t',

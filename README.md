@@ -25,8 +25,8 @@ assumption adjustable.
 - **Per-pathway details**: mass yield, lifecycle GHG reduction, capture efficiency,
   co-product revenue
 - **Accounting basis**: full lifecycle (default; CORSIA lifecycle reductions against the
-  89 gCO₂e/MJ well-to-wake fossil jet baseline, 95% net-negativity and co-product displacement
-  credit for CDR) vs simple displacement (an upper bound for SAF: each gallon credited with the
+  89 gCO₂e/MJ well-to-wake fossil jet baseline; CDR storage net of a 0.90 lifecycle factor, and CDR
+  co-products credited with the fossil emissions they displace, so CDR costs are per tonne of total benefit) vs simple displacement (an upper bound for SAF: each gallon credited with the
   full well-to-wake emissions of fossil jet). The lifecycle reduction sets the 45Z credit in both modes.
 
 **Scenario presets** (central, FT-SAF at $4 or $10/gal, jet fuel at $4.38, +20% or +60% non-CO₂ credit,
@@ -36,8 +36,8 @@ FT-SAF would cost the same per tonne as BECCS (electricity), holding everything 
 Cost chart reference lines show EPA's 2023 social cost of carbon for 2025 emissions at 2.5% and 1.5%
 discount rates ($159 and $441/tCO₂, 2025 dollars); this is a discount-rate range, not EPA's full uncertainty range.
 
-Results update live: benchmark tiles (FT-SAF vs BECCS-electricity, the most common pathways
-today), a $/tCO₂ comparison chart with P10–P90 uncertainty ranges, a carbon-fate-per-dry-ton
+Results update live: benchmark tiles (FT-SAF vs BECCS-electricity, two established routes
+on the same residues), a $/tCO₂ comparison chart with P10–P90 uncertainty ranges, a carbon-fate-per-dry-ton
 chart, and a full data table. **Copy scenario link** encodes all assumptions in the URL so a
 specific scenario can be shared.
 
@@ -53,6 +53,11 @@ under current law.
 HEFA cost, CCS cost for high-purity CO₂) and several bugs fixed, including uncertainty ranges
 that were too narrow and a 45Z + 45Q stack that the statute does not allow. See the
 changelog at the end of [METHODOLOGY.md](METHODOLOGY.md).
+
+**October 2026 update:** in full lifecycle mode, CDR costs now count fossil emissions avoided by
+energy co-products, putting BECCS on the same per-tonne-of-benefit basis as FT-SAF + CCS
+(BECCS-electricity $155 per tonne of benefit, $190 per tonne stored). FT-SAF + CCS now shares FT-SAF's
+random draws and is listed first in the cost chart.
 
 See [METHODOLOGY.md](METHODOLOGY.md) for the full set of assumptions, formulas, pathway
 definitions, and literature sources.
