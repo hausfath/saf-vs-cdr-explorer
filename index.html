@@ -24,7 +24,6 @@
     --hyb: #1baf7a;
     --hyb-soft: rgba(27,175,122,0.16);
     --hyb-ink: #13805a;
-    --released: #e3e2da;
     --track: #e7e6df;
     --serif: "Charter", "Iowan Old Style", Georgia, serif;
     --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -45,7 +44,6 @@
     --hyb: #199e70;
     --hyb-soft: rgba(25,158,112,0.20);
     --hyb-ink: #3cc493;
-    --released: #33332f;
     --track: #2c2c2a;
   }
   * { box-sizing: border-box; }
@@ -643,11 +641,10 @@
   <section class="card">
     <h2>Carbon benefit per dry tonne of biomass</h2>
     <p class="card-sub" id="carbonSub"></p>
-    <div class="chart-wrap"><svg id="carbonChart" role="img" aria-label="Stacked bar chart of carbon stored, avoided, and released per dry tonne"></svg></div>
+    <div class="chart-wrap"><svg id="carbonChart" role="img" aria-label="Stacked bar chart of CO₂ stored and fossil CO₂ avoided per dry tonne of biomass"></svg></div>
     <div class="legend">
       <span class="key"><i style="background:var(--cdr)"></i> CO₂ permanently stored</span>
       <span class="key"><i style="background:var(--saf)"></i> CO₂ avoided (fossil displacement)</span>
-      <span class="key"><i style="background:var(--released);border:1px solid var(--grid)"></i> CO₂ released to atmosphere</span>
     </div>
   </section>
 
@@ -674,7 +671,7 @@
     <p><strong>CDR:</strong> <code>(total cost − co-product revenue − 45Q) ÷ tCO₂e benefit</code>. Costs are feedstock-inclusive
        and calibrated to actual offtake pricing per tonne removed. A dry tonne of biomass (50% carbon) holds 1.83 tCO₂e; removal = 1.83 × capture efficiency.
        Under full lifecycle accounting the benefit also includes fossil emissions avoided by energy co-products
-       (electricity, heat, hydrogen), the same basis on which FT-SAF&nbsp;+&nbsp;CCS is credited for both its fuel and its
+       (electricity, heat), the same basis on which FT-SAF&nbsp;+&nbsp;CCS is credited for both its fuel and its
        stored CO₂; hover a bar to see the cost per tonne stored. Under simple displacement it is CO₂ removed only.</p>
     <h3>Subsidies</h3>
     <p>The 45Q credit ($85/tCO₂ statutory) requires gaseous CO₂ capture: BECCS, WtE+CCS, and FT-SAF+CCS qualify; bio-oil,
@@ -684,18 +681,11 @@
        ~$0.81/gal for FT-SAF, ~$0.59/gal for HEFA and ~$0.34/gal for AtJ, and it varies with each Monte Carlo draw.
        A facility claiming 45Q is not a qualified 45Z facility (§45Z(d)(4)), so FT-SAF&nbsp;+&nbsp;CCS carries an
        election: 45Q on stored CO₂ (default, worth more) or 45Z alone with CCS counted in the fuel's CI.</p>
-    <p>The 45V clean hydrogen production credit survived OBBBA but was shortened: facilities must begin construction
-       before January 1, 2028 (previously 2033) to claim up to $3.00/kg for ten years. 45V and 45Q cannot be claimed
-       at the same facility (§45V(d)(2)), so the BECCS (hydrogen) pathway carries an election toggle: 45Q on stored
-       CO₂ (default) or 45V on the hydrogen, worth ~$126/tCO₂ removed at the default 65% capture efficiency. Deeply
-       carbon-negative biomass-gasification hydrogen readily meets the 0.45 kgCO₂e/kg threshold for the full rate.
-       Its co-product revenue default ($130/tCO₂ ≈ $3.1/kg H₂) is a market price between gray and green hydrogen,
-       independent of either credit.</p>
     <h3>Accounting toggles</h3>
     <p><em>Full lifecycle</em> (default) multiplies SAF's benefit by its lifecycle GHG reduction (CORSIA defaults,
        55–91% depending on pathway), counts CDR storage net of its own lifecycle emissions (default 90% of gross
        tonnes stored, adjustable per pathway), and credits CDR co-products
-       (electricity, heat, hydrogen) with the fossil emissions they displace. <em>Simple displacement</em> is an
+       (electricity, heat) with the fossil emissions they displace. <em>Simple displacement</em> is an
        upper bound for SAF: each gallon is credited with the full well-to-wake emissions of the fossil jet it replaces,
        as if producing the SAF emitted nothing, and CDR storage is counted gross. In both modes the lifecycle
        reduction still sets the 45Z credit, which the law ties to the fuel's actual carbon intensity.</p>
@@ -816,8 +806,6 @@ const CDR_PATHWAYS = [
     eff: [0.80, 0.90, 0.95], cost: [200, 300, 400], coproduct: 'electricity', rev: [18, 25, 35], has45q: true, avoidedPerDt: 0.33 },
   { id: 'beccsH',  name: 'BECCS (heat)', short: 'BECCS (heat)', feedstock: 'Ag residues, forest waste', cat: 'cellulosic',
     eff: [0.80, 0.90, 0.95], cost: [200, 285, 400], coproduct: 'heat', rev: [20, 25, 35], has45q: true, avoidedPerDt: 0.25 },
-  { id: 'beccsH2', name: 'BECCS (hydrogen)', short: 'BECCS (hydrogen)', feedstock: 'Ag residues, forest waste', cat: 'cellulosic',
-    eff: [0.55, 0.65, 0.75], cost: [200, 300, 400], coproduct: 'hydrogen', rev: [78, 130, 182], has45q: true, avoidedPerDt: 0.55 },
   { id: 'wte',     name: 'WtE + CCS', short: 'WtE + CCS', feedstock: 'Municipal solid waste', cat: 'MSW',
     eff: [0.70, 0.80, 0.88], cost: [200, 300, 400], coproduct: 'electricity + heat', rev: [25, 40, 60], has45q: true, avoidedPerDt: 0.30 },
   { id: 'biooil',  name: 'Bio-oil seq. (cellulosic)', short: 'Bio-oil sequestration', feedstock: 'Ag residues, forest waste', cat: 'cellulosic',
@@ -899,8 +887,6 @@ const SCC_LINES = [
   { value: 441, label: 'SCC high $441', note: '1.5% discount' },
 ];
 const JET_T = [2.10, 2.75, 4.00]; // $/gal, P10/P50/P90 (US Gulf Coast; 2022-26 mean ~$2.78)
-const H2_KG_PER_DRY_TON = 50;   // Mote PFD: 0.05 t H2 per dry ton of biomass
-const V45_PER_KG_H2 = 3.00;     // 45V max ($/kg, CI < 0.45 kgCO2e/kg + prevailing wage)
 
 // FT-SAF+CCS production cost = FT-SAF base MFSP + CCS cost applied to the
 // tCO2 stored per gallon (0.537 of biomass carbon, spread over the fuel yield)
@@ -983,15 +969,9 @@ function evalScenario(inputs, opts) {
     const toGross = C.CDR_LCA_REF;                     // net-at-reference input -> per gross tonne
     // 45Q is applied to the tonnes counted (net tonnes in lifecycle mode), matching the Frontier
     // BiCRS POV. Statute pays on gross metered tonnes, so this understates 45Q by a factor L
-    // (~$9/t at L = 0.90), conservatively against CDR. BECCS-H2 must elect 45Q or 45V (IRC
-    // 45V(d)(2) bars stacking); 45V pays $3/kg on ~50 kg H2 per dry tonne, a physical quantity
-    // per gross tonne stored, so it is converted to the counted tonne.
-    let sub = cp.has45q ? inputs.q45 : 0;
-    let subLabel = '45Q credit';
-    if (cp.id === 'beccsH2' && inputs.h2Credit === 'v45') {
-      sub = V45_PER_KG_H2 * H2_KG_PER_DRY_TON / (C.CO2E_PER_DRY_TON * effT[1]) * perT;
-      subLabel = '45V credit on H₂';
-    }
+    // (~$9/t at L = 0.90), conservatively against CDR.
+    const sub = cp.has45q ? inputs.q45 : 0;
+    const subLabel = '45Q credit';
     // Full lifecycle credits energy co-products with the fossil emissions they displace, as SAF is
     // credited for displaced jet fuel, so costs are per tonne of total benefit (stored + avoided).
     // Simple displacement counts storage only. Efficiency is not sampled, so one factor fits all draws.
@@ -1031,7 +1011,7 @@ function bandOf(draws, q) {
 // ============================================================================
 function defaultInputs() {
   const inputs = { jetPrice: JET_T[1], z45Max: 1.00, q45: 85, useLca: true, ccsCost: CCS_COST_T[1], ftccsCredit: 'q45', nonCo2: 0,
-    h2Credit: 'q45', mfsp: {}, massYield: {}, lcaRed: {}, cdrCost: {}, cdrRev: {}, cdrEff: {} };
+    mfsp: {}, massYield: {}, lcaRed: {}, cdrCost: {}, cdrRev: {}, cdrEff: {} };
   for (const sp of SAF_PATHWAYS) {
     if (sp.mfsp) inputs.mfsp[sp.id] = sp.mfsp[1]; // FT-SAF+CCS has none: derived from FT base + CCS adder
     inputs.massYield[sp.id] = sp.massYield[1];
@@ -1056,7 +1036,7 @@ const state = {
 const METRIC_LABEL = {
   gross: 'Gross cost',
   net: 'Net cost (after fuel / co-product revenue)',
-  netWithSubsidy: 'Net cost with subsidies (45Q, 45Z, or 45V as applicable)',
+  netWithSubsidy: 'Net cost with subsidies (45Q or 45Z as applicable)',
 };
 
 // ============================================================================
@@ -1239,22 +1219,6 @@ function buildControls() {
     const kids = [slider({ key: 'cost-' + cp.id, label: cp.short, unit: '$/tCO₂', cls: 'cdr', min: 40, max: 650, step: 5, decimals: 0,
       sub: cp.feedstock + (cp.has45q ? ' · 45Q-eligible' : ''),
       value: () => state.inputs.cdrCost[cp.id], set: v => { state.inputs.cdrCost[cp.id] = v; } })];
-    if (cp.id === 'beccsH2') {
-      const elect = document.createElement('div');
-      elect.className = 'ctl cdr';
-      elect.setAttribute('role', 'radiogroup');
-      elect.setAttribute('aria-label', 'Hydrogen tax credit election');
-      elect.innerHTML = `
-        <div class="sub" style="margin-bottom:4px">Tax credit: facilities cannot claim both 45Q and 45V (§45V(d)(2))</div>
-        <label class="radio-row"><input type="radio" name="h2credit" value="q45"> 45Q on stored CO₂</label>
-        <label class="radio-row"><input type="radio" name="h2credit" value="v45"> 45V on hydrogen ($3/kg; construction before 2028)</label>`;
-      elect.querySelectorAll('input[name=h2credit]').forEach(rb => {
-        rb.addEventListener('change', () => { state.inputs.h2Credit = rb.value; update(); });
-      });
-      elect._sync = () => elect.querySelectorAll('input[name=h2credit]').forEach(rb => { rb.checked = rb.value === state.inputs.h2Credit; });
-      controlRegistry.push({ el: elect, getter: () => state.inputs.h2Credit });
-      kids.push(elect);
-    }
     const adv = document.createElement('details');
     adv.className = 'adv';
     adv.innerHTML = '<summary>More assumptions</summary>';
@@ -1265,7 +1229,6 @@ function buildControls() {
         sub: 'Net removal per gross tonne stored, after supply-chain and process emissions. Costs are quoted per net tonne at 0.90; a lower factor raises cost per net tonne',
         value: () => state.inputs.cdrLca[cp.id], set: v => { state.inputs.cdrLca[cp.id] = v; } }),
       slider({ key: 'rev-' + cp.id, label: 'Co-product revenue (' + cp.coproduct + ')', unit: '$/tCO₂', cls: 'cdr', min: 0, max: 250, step: 1, decimals: 0,
-        sub: cp.id === 'beccsH2' ? 'Default $130/tCO₂ ≈ $3.1/kg H₂, a clean-H₂ premium between gray (~$1–2/kg) and green (~$4.50+/kg)' : undefined,
         value: () => state.inputs.cdrRev[cp.id], set: v => { state.inputs.cdrRev[cp.id] = v; } }));
     kids.push(adv);
     c.appendChild(block(...kids));
@@ -1361,7 +1324,7 @@ function groupedRows(results) {
   const pick = ids => ids.map(id => byId[id]);
   return [
     { label: 'Cellulosic residues: SAF', rows: pick(['ftccs', 'ft', 'ftsw', 'atj']) },
-    { label: 'Cellulosic residues: carbon removal', rows: pick(['beccsE', 'beccsH', 'beccsH2', 'biooil', 'biochar']) },
+    { label: 'Cellulosic residues: carbon removal', rows: pick(['beccsE', 'beccsH', 'biooil', 'biochar']) },
     { label: 'Lipid feedstocks', rows: pick(['hefa', 'biooilHtl']) },
     { label: 'Other feedstocks: carbon removal', rows: pick(['wte', 'injection', 'burial']) },
   ];
@@ -1507,12 +1470,12 @@ function renderCarbonChart(results) {
   svg.textContent = '';
   const useLca = state.inputs.useLca;
   const byId = Object.fromEntries(results.map(r => [r.def.id, r]));
-  const ids = ['ft', 'ftccs', 'ftsw', 'atj', 'beccsE', 'beccsH', 'beccsH2', 'biooil', 'biochar', 'burial'];
+  const ids = ['ft', 'ftccs', 'ftsw', 'atj', 'beccsE', 'beccsH', 'biooil', 'biochar', 'burial'];
   const rows = ids.map(id => byId[id]);
 
   const W = chartWidth(svg);
   const narrow = W < 560;
-  const rowH = narrow ? 28 : 30, ml = narrow ? 128 : 172, mr = narrow ? 40 : 60, mt = 22, mb = 30;
+  const rowH = narrow ? 28 : 30, ml = narrow ? 128 : 172, mr = narrow ? 40 : 60, mt = 10, mb = 30;
   const fs = narrow ? 11.5 : 12;
   const H = mt + rows.length * rowH + mb;
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
@@ -1529,12 +1492,10 @@ function renderCarbonChart(results) {
       stored = C.CO2E_PER_DRY_TON * r.effMid * (useLca ? r.lcaMid : 1);
       avoided = useLca ? r.def.avoidedPerDt : 0;
     }
-    const grossStored = r.type === 'SAF' ? C.CO2E_PER_DRY_TON * r.def.cdrEff : C.CO2E_PER_DRY_TON * r.effMid;
-    const released = Math.max(0, C.CO2E_PER_DRY_TON - grossStored);
-    return { r, stored, avoided, released, total: stored + avoided };
+    return { r, stored, avoided, total: stored + avoided };
   });
 
-  const maxX = Math.max(C.CO2E_PER_DRY_TON, ...segRows.map(s => C.CO2E_PER_DRY_TON + s.avoided)) * 1.10;
+  const maxX = Math.max(...segRows.map(s => s.total)) * 1.12;
   const x = v => ml + v / maxX * (W - ml - mr);
 
   for (const tk of niceTicks(0, maxX, narrow ? 4 : 6)) {
@@ -1543,10 +1504,6 @@ function renderCarbonChart(results) {
       .textContent = tk.toFixed(1);
   }
   el('text', { x: W - 2, y: H - 2, 'text-anchor': 'end', 'font-size': 10.5, fill: 'var(--ink-3)' }, svg).textContent = 'tCO₂e per dry tonne';
-  // biomass carbon reference
-  el('line', { x1: x(C.CO2E_PER_DRY_TON), x2: x(C.CO2E_PER_DRY_TON), y1: mt - 6, y2: H - mb, stroke: 'var(--ink-2)', 'stroke-width': 1, 'stroke-dasharray': '3,4' }, svg);
-  el('text', { x: x(C.CO2E_PER_DRY_TON), y: mt - 9, 'text-anchor': narrow ? 'end' : 'middle', 'font-size': 10.5, fill: 'var(--ink-2)' }, svg)
-    .textContent = narrow ? `all biomass carbon = ${C.CO2E_PER_DRY_TON.toFixed(2)}` : `all carbon in one dry tonne = ${C.CO2E_PER_DRY_TON.toFixed(2)} tCO₂e`;
   el('line', { x1: x(0), x2: x(0), y1: mt, y2: H - mb, stroke: 'var(--baseline)', 'stroke-width': 1.2 }, svg);
 
   const GAP = 2;
@@ -1557,28 +1514,23 @@ function renderCarbonChart(results) {
     el('text', { x: ml - 8, y: by + barH / 2 + 4, 'text-anchor': 'end', 'font-size': fs, fill: 'var(--ink)' }, gEl)
       .textContent = s.r.def.short;
 
-    // segments: stored | released (to 1.833) | avoided beyond
-    let cursor = 0;
-    if (s.stored > 0.005) {
-      el('path', { d: barPath(x(0), x(s.stored) - GAP / 2, by, barH), fill: 'var(--cdr)', class: 'bar-main' }, gEl);
-      cursor = s.stored;
+    // stacked segments: stored, then avoided, with a 2px surface gap between them
+    const hasStored = s.stored > 0.005, hasAvoided = s.avoided > 0.005;
+    if (hasStored) {
+      // square right edge where the avoided segment continues; rounded data-end otherwise
+      if (hasAvoided) el('rect', { x: x(0), y: by, width: Math.max(0, x(s.stored) - x(0) - GAP / 2), height: barH, fill: 'var(--cdr)', class: 'bar-main' }, gEl);
+      else el('path', { d: barPath(x(0), x(s.stored), by, barH), fill: 'var(--cdr)', class: 'bar-main' }, gEl);
     }
-    // released segment starts where net storage ends (in lifecycle mode the lifecycle-emissions haircut is shown as released)
-    const grossStored = s.stored;
-    if (C.CO2E_PER_DRY_TON - s.stored > 0.005) {
-      el('rect', { x: x(grossStored) + GAP / 2, y: by, width: Math.max(0, x(C.CO2E_PER_DRY_TON) - x(grossStored) - GAP), height: barH, rx: 2, fill: 'var(--released)' }, gEl);
-    }
-    if (s.avoided > 0.005) {
-      el('path', { d: barPath(x(C.CO2E_PER_DRY_TON) + GAP / 2, x(C.CO2E_PER_DRY_TON + s.avoided), by, barH), fill: 'var(--saf)', class: 'bar-main' }, gEl);
+    if (hasAvoided) {
+      el('path', { d: barPath(x(s.stored) + (hasStored ? GAP / 2 : 0), x(s.total), by, barH), fill: 'var(--saf)', class: 'bar-main' }, gEl);
     }
     // total climate benefit label
-    el('text', { x: x(C.CO2E_PER_DRY_TON + s.avoided) + 7, y: by + barH / 2 + 4, 'font-size': 11.5, 'font-weight': 600, fill: 'var(--ink)', style: 'font-variant-numeric:tabular-nums' }, gEl)
+    el('text', { x: x(s.total) + 7, y: by + barH / 2 + 4, 'font-size': 11.5, 'font-weight': 600, fill: 'var(--ink)', style: 'font-variant-numeric:tabular-nums' }, gEl)
       .textContent = s.total.toFixed(2);
     el('rect', { x: 0, y: mt + i * rowH, width: W, height: rowH, fill: 'transparent' }, gEl);
     attachTip(gEl, () => `<h4>${esc(s.r.def.name)}</h4><table>
       <tr><td>CO₂ stored${useLca ? ' (net of lifecycle emissions)' : ''}</td><td>${s.stored.toFixed(2)}</td></tr>
       <tr><td>CO₂ avoided${useLca && s.r.type === 'SAF' ? ' (lifecycle-adjusted)' : ''}${s.r.type === 'SAF' && s.r.mid.nonCo2 > 0 ? ' incl. non-CO₂ credit' : ''}</td><td>${s.avoided.toFixed(2)}</td></tr>
-      <tr><td>CO₂ released</td><td>${s.released.toFixed(2)}</td></tr>
       <tr class="total"><td>Total climate benefit</td><td>${s.total.toFixed(2)} tCO₂e per dry tonne</td></tr></table>`);
   });
 }
@@ -1673,7 +1625,6 @@ function readHash() {
       for (const k of ['jetPrice', 'z45Max', 'q45', 'ccsCost', 'nonCo2']) if (typeof p.i[k] === 'number') d[k] = p.i[k];
       if (typeof p.i.useLca === 'boolean') d.useLca = p.i.useLca;
       if (['q45', 'z45'].includes(p.i.ftccsCredit)) d.ftccsCredit = p.i.ftccsCredit;
-      if (['q45', 'v45'].includes(p.i.h2Credit)) d.h2Credit = p.i.h2Credit;
       for (const grp of ['mfsp', 'massYield', 'lcaRed', 'cdrCost', 'cdrRev', 'cdrEff', 'cdrLca'])
         for (const id in d[grp]) if (p.i[grp] && typeof p.i[grp][id] === 'number') d[grp][id] = p.i[grp][id];
       state.inputs = d;
@@ -1782,7 +1733,7 @@ function update() {
         : 'Simple displacement accounting (upper bound for SAF): each gallon credited with the full well-to-wake emissions of fossil jet.') +
       ' Dashed lines mark EPA’s 2023 social cost of carbon for 2025 emissions at 2.5% and 1.5% discount rates ($159 and $441, 2025$).';
     document.getElementById('carbonSub').textContent =
-      'Where the 1.83 tCO₂e in each dry tonne (1,000 kg) of biomass ends up, plus avoided fossil emissions beyond it. ' +
+      'Total climate benefit from each dry tonne (1,000 kg) of biomass: CO₂ durably stored plus fossil CO₂ avoided by the fuel or energy co-product. ' +
       (state.inputs.useLca
         ? 'Full accounting: storage net of lifecycle emissions (90% of gross by default), SAF avoidance lifecycle-adjusted, CDR co-product displacement credited.'
         : 'Simple accounting: gross storage and full displacement credit.') +

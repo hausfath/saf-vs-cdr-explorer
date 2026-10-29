@@ -4,8 +4,8 @@
 
 Given a ton of waste biomass, is it a better climate investment to make sustainable aviation
 fuel (SAF) or to remove carbon (CDR)? This interactive tool compares the cost per tonne of
-CO₂ benefit across 14 pathways — five SAF production routes (Fischer-Tropsch, FT+CCS, HEFA,
-alcohol-to-jet) and nine biomass carbon removal routes (BECCS variants, waste-to-energy+CCS,
+CO₂ benefit across 13 pathways — five SAF production routes (Fischer-Tropsch, FT+CCS, HEFA,
+alcohol-to-jet) and eight biomass carbon removal routes (BECCS for electricity or heat, waste-to-energy+CCS,
 bio-oil sequestration, biochar, biomass injection, biomass burial) — with every major
 assumption adjustable.
 
@@ -17,8 +17,7 @@ assumption adjustable.
 - **Jet fuel price** (SAF's displacement revenue)
 - **CDR total cost** for each pathway, calibrated by default to actual offtake pricing
 - **Tax credits**: 45Q amount, 45Z Clean Fuel Production Credit ceiling (post-OBBBA $1.00/gal,
-  pre-OBBBA $1.75/gal, or $0 for post-2029 expiry), the BECCS-hydrogen 45Q-vs-45V election
-  (§45V(d)(2)), and the FT-SAF+CCS 45Q-vs-45Z election (no 45Z at a facility claiming 45Q,
+  pre-OBBBA $1.75/gal, or $0 for post-2029 expiry), and the FT-SAF+CCS 45Q-vs-45Z election (no 45Z at a facility claiming 45Q,
   §45Z(d)(4))
 - **Non-CO₂ sensitivity**: optionally credit SAF for reduced contrail warming, as a share of its
   CO₂ benefit
@@ -37,8 +36,8 @@ Cost chart reference lines show EPA's 2023 social cost of carbon for 2025 emissi
 discount rates ($159 and $441/tCO₂, 2025 dollars); this is a discount-rate range, not EPA's full uncertainty range.
 
 Results update live: benchmark tiles (FT-SAF vs BECCS-electricity, two established routes
-on the same residues), a $/tCO₂ comparison chart with P10–P90 uncertainty ranges, a carbon-fate-per-dry-ton
-chart, and a full data table. **Copy scenario link** encodes all assumptions in the URL so a
+on the same residues), a $/tCO₂ comparison chart with P10–P90 uncertainty ranges, a chart of carbon stored plus
+fossil CO₂ avoided per dry tonne, and a full data table. **Copy scenario link** encodes all assumptions in the URL so a
 specific scenario can be shared.
 
 ## How it works
