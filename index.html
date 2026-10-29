@@ -1470,7 +1470,8 @@ function renderCarbonChart(results) {
   svg.textContent = '';
   const useLca = state.inputs.useLca;
   const byId = Object.fromEntries(results.map(r => [r.def.id, r]));
-  const ids = ['ft', 'ftccs', 'ftsw', 'atj', 'beccsE', 'beccsH', 'biooil', 'biochar', 'burial'];
+  // same order as the cost chart (groupedRows), cellulosic pathways only
+  const ids = ['ftccs', 'ft', 'ftsw', 'atj', 'beccsE', 'beccsH', 'biooil', 'biochar', 'burial'];
   const rows = ids.map(id => byId[id]);
 
   const W = chartWidth(svg);
